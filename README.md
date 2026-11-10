@@ -21,6 +21,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Editor browser tests
+
+The editor is at `/editor` and requires a Clerk session. To run its Playwright tests, configure a Clerk development instance in `.env.local` with `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`. Set `E2E_CLERK_USER_EMAIL` to an existing development test user without MFA or pending session tasks. Use a `+clerk_test` address to suppress test email delivery.
+
+```sh
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+Playwright builds and starts the app on port 3100.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
