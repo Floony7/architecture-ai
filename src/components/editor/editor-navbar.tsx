@@ -1,3 +1,4 @@
+import { UserButton } from "@clerk/nextjs";
 import type { ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
@@ -38,7 +39,9 @@ export function EditorNavbar({
         </Button>
       </div>
       <div>{center}</div>
-      <div />
+      <div className="flex justify-end">
+        <UserButton />
+      </div>
     </nav>
   );
 }

@@ -14,6 +14,7 @@
 
 ## System Boundaries
 
+- `app` — Root-level Next.js App Router, colocated with `proxy.ts` so Next.js loads the proxy in development and production.
 - `app/api` — Authenticated request handlers: input validation, ownership checks, task triggering, and persistence.
 - `trigger` — Long-running background jobs: AI design generation and spec generation.
 - `lib` — Shared infrastructure: Prisma client, access control helpers, and utilities.
@@ -33,7 +34,8 @@
 
 - Every project has a single owner (Clerk user ID).
 - Projects can include additional collaborators.
-- Only authenticated users can access protected routes.
+- The root proxy redirects `/` by session state and requires a Clerk session by default. Only the configured sign-in and sign-up paths and their nested steps are public application routes.
+- Protected resources verify the session where they read or mutate data.
 - Only the owner or a collaborator can mutate project resources.
 - Liveblocks room tokens are issued only after verifying project membership.
 

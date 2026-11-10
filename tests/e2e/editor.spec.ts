@@ -1,12 +1,37 @@
 import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
 import { expect, test } from "@playwright/test";
 
-test("redirects signed-out visitors to sign-in", async ({ page }) => {
+test("redirects signed-out visitors and leaves auth forms public", async ({ page }) => {
   await setupClerkTestingToken({ page });
+
+  await page.goto("/");
+  await expect(page).toHaveURL("/sign-in");
+
   await page.goto("/editor");
 
   await expect(page).toHaveURL(/\/sign-in(?:\?|$)/);
   await expect(page.getByRole("navigation", { name: "Editor" })).toHaveCount(0);
+
+  await page.goto("/sign-in-private.json");
+  await expect(page).toHaveURL(/\/sign-in\?/);
+
+  for (const [path, component] of [
+    ["/sign-in", "SignIn"],
+    ["/sign-up", "SignUp"],
+  ]) {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(path);
+
+    const form = page.locator(`[data-clerk-component="${component}"]`);
+    const brandPanel = page.getByRole("complementary");
+    await expect(form).toBeVisible();
+    await expect(brandPanel).toBeVisible();
+
+    await page.setViewportSize({ width: 320, height: 640 });
+    await expect(brandPanel).toBeHidden();
+    await expect(form).toBeInViewport();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+  }
 });
 
 test("projects sidebar opens over the editor canvas", async ({ page }) => {
@@ -17,9 +42,10 @@ test("projects sidebar opens over the editor canvas", async ({ page }) => {
   }
 
   await setupClerkTestingToken({ page });
-  await page.goto("/");
+  await page.goto("/sign-in");
   await clerk.signIn({ page, emailAddress });
-  await page.goto("/editor");
+  await page.goto("/");
+  await expect(page).toHaveURL("/editor");
 
   const navbar = page.getByRole("navigation", { name: "Editor" });
   const toggle = navbar.getByRole("button", { name: /project sidebar/i });
@@ -58,5 +84,13 @@ test("projects sidebar opens over the editor canvas", async ({ page }) => {
 
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+
+  await test.step("Clerk account menu and sign-out", async () => {
+    await navbar.getByRole("button", { name: /user menu/i }).click();
+    await expect(page.getByRole("button", { name: "Manage account" })).toBeVisible();
+    await page.getByRole("button", { name: "Sign out" }).click();
+
+    await expect(page).toHaveURL("/sign-in");
   });
 });
