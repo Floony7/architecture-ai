@@ -19,7 +19,7 @@
 - `trigger` — Long-running background jobs: AI design generation and spec generation.
 - `lib` — Shared infrastructure: Prisma client, access control helpers, and utilities.
 - `components` — UI composition: canvas surfaces, sidebars, dialogs, and interactive elements.
-- `prisma` — Database schema and generated client output.
+- `prisma` — Multi-file database schema and SQL migrations. The generated Prisma client lives in `src/generated/prisma` and is regenerated during builds.
 - `data` — Legacy local directory. Not used for new artifacts.
 
 ## Storage Model
@@ -32,8 +32,8 @@
 
 ## Auth and Collaboration Model
 
-- Every project has a single owner (Clerk user ID).
-- Projects can include additional collaborators.
+- Every project has a single owner (`Project.ownerId`, a Clerk user ID; no local user table).
+- Projects can include additional collaborators, uniquely identified by project and email; deleting a project cascades to its collaborator records.
 - The root proxy redirects `/` by session state and requires a Clerk session by default. Only the configured sign-in and sign-up paths and their nested steps are public application routes.
 - Protected resources verify the session where they read or mutate data.
 - Only the owner or a collaborator can mutate project resources.

@@ -1,22 +1,47 @@
-import { Plus, X } from "lucide-react";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
+import type { MouseEventHandler, Ref } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
+import type { MockProject, ProjectDialog } from "./use-project-dialogs";
+
 interface ProjectSidebarProps {
   id: string;
   isOpen: boolean;
+  projects: MockProject[];
   onClose: () => void;
-  onNewProject?: () => void;
+  onNewProject: MouseEventHandler<HTMLButtonElement>;
+  onProjectAction: (
+    dialog: Exclude<ProjectDialog, { type: "create" }>,
+    trigger: HTMLButtonElement,
+  ) => void;
+  createButtonRef: Ref<HTMLButtonElement>;
 }
 
 export function ProjectSidebar({
   id,
   isOpen,
+  projects,
   onClose,
   onNewProject,
+  onProjectAction,
+  createButtonRef,
 }: ProjectSidebarProps) {
+  const projectGroups = [
+    {
+      tab: "my-projects",
+      projects: projects.filter((project) => project.isOwned),
+      emptyMessage: "No projects yet.",
+    },
+    {
+      tab: "shared",
+      projects: projects.filter((project) => !project.isOwned),
+      emptyMessage: "No shared projects yet.",
+    },
+  ];
+
   return (
     <aside
       id={id}
@@ -46,25 +71,59 @@ export function ProjectSidebar({
           <TabsTrigger value="my-projects">My Projects</TabsTrigger>
           <TabsTrigger value="shared">Shared</TabsTrigger>
         </TabsList>
-        <TabsContent
-          value="my-projects"
-          className="grid place-items-center overflow-y-auto text-copy-muted"
-        >
-          <p>No projects yet.</p>
-        </TabsContent>
-        <TabsContent
-          value="shared"
-          className="grid place-items-center overflow-y-auto text-copy-muted"
-        >
-          <p>No shared projects yet.</p>
-        </TabsContent>
+        {projectGroups.map(({ tab, projects, emptyMessage }) => (
+          <TabsContent key={tab} value={tab} className="overflow-y-auto">
+            {projects.length ? (
+              <ul className="space-y-1">
+                {projects.map((project) => (
+                  <li
+                    key={project.id}
+                    className="flex items-center gap-1 rounded-xl bg-elevated px-2 py-1 pl-3"
+                  >
+                    <span className="min-w-0 flex-1 wrap-anywhere py-1">{project.name}</span>
+                    {project.isOwned && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="rounded-xl"
+                          aria-label={`Rename ${project.name}`}
+                          onClick={(event) =>
+                            onProjectAction({ type: "rename", project }, event.currentTarget)
+                          }
+                        >
+                          <Pencil aria-hidden="true" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="rounded-xl text-error hover:text-error"
+                          aria-label={`Delete ${project.name}`}
+                          onClick={(event) =>
+                            onProjectAction({ type: "delete", project }, event.currentTarget)
+                          }
+                        >
+                          <Trash2 aria-hidden="true" />
+                        </Button>
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="grid h-full place-items-center text-copy-muted">{emptyMessage}</p>
+            )}
+          </TabsContent>
+        ))}
       </Tabs>
 
       <footer className="shrink-0 border-t border-surface-border p-4">
         <Button
+          ref={createButtonRef}
           type="button"
           className="w-full rounded-xl"
-          disabled={!onNewProject}
           onClick={onNewProject}
         >
           <Plus className="size-5" aria-hidden="true" data-icon="inline-start" />

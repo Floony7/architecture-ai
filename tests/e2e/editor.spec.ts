@@ -34,7 +34,7 @@ test("redirects signed-out visitors and leaves auth forms public", async ({ page
   }
 });
 
-test("projects sidebar opens over the editor canvas", async ({ page }) => {
+test("editor home and sidebar manage mock projects", async ({ page }) => {
   const emailAddress = process.env.E2E_CLERK_USER_EMAIL;
 
   if (!emailAddress) {
@@ -49,40 +49,89 @@ test("projects sidebar opens over the editor canvas", async ({ page }) => {
 
   const navbar = page.getByRole("navigation", { name: "Editor" });
   const toggle = navbar.getByRole("button", { name: /project sidebar/i });
-  const canvas = page.getByRole("main", { name: "Editor canvas" });
+  const home = page.getByRole("main", { name: "Editor home" });
   const sidebar = page.getByRole("complementary", { name: "Projects" });
+  const createDialog = page.getByRole("dialog", { name: "Create Project" });
 
-  await test.step("desktop layout and project tabs", async () => {
+  await test.step("create a project from the home and preview its slug", async () => {
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
-    await expect(canvas).toBeVisible();
-    const canvasBounds = await canvas.boundingBox();
-    expect(canvasBounds).not.toBeNull();
+    await expect(home.getByRole("heading", {
+      name: "Create a project or open an existing one",
+    })).toBeVisible();
+    const newProject = home.getByRole("button", { name: "New Project" });
+    await newProject.click();
+    const projectName = createDialog.getByRole("textbox", { name: "Project name" });
+    const create = createDialog.getByRole("button", { name: "Create Project" });
+    await expect(create).toBeDisabled();
+    await projectName.fill("Architecture");
+    await expect(createDialog.getByText("architecture", { exact: true })).toBeVisible();
+    await projectName.fill("Architecture & Events");
+    await expect(createDialog.getByText("architecture-events", { exact: true })).toBeVisible();
+    await create.click();
+    await expect(createDialog).toBeHidden();
+    await expect(newProject).toBeFocused();
+  });
 
+  await test.step("rename and delete an owned project", async () => {
+    const homeBounds = await home.boundingBox();
+    expect(homeBounds).not.toBeNull();
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
     await expect(sidebar).toBeInViewport({ ratio: 1 });
-    expect(await canvas.boundingBox()).toEqual(canvasBounds);
-    await expect(sidebar.getByText("No projects yet.", { exact: true })).toBeVisible();
+    expect(await home.boundingBox()).toEqual(homeBounds);
+    await expect(sidebar.getByText("Payments Platform", { exact: true })).toBeVisible();
 
+    await sidebar.getByRole("button", { name: "Rename Architecture & Events" }).click();
+    const renameDialog = page.getByRole("dialog", { name: "Rename Project" });
+    const projectName = renameDialog.getByRole("textbox", { name: "Project name" });
+    await expect(renameDialog).toHaveAccessibleDescription(/Architecture & Events/);
+    await expect(projectName).toHaveValue("Architecture & Events");
+    await expect(projectName).toBeFocused();
+    await projectName.fill("Event Architecture");
+    await projectName.press("Enter");
+    await expect(renameDialog).toBeHidden();
+    await expect(sidebar.getByText("Event Architecture", { exact: true })).toBeVisible();
+
+    const deleteProject = sidebar.getByRole("button", { name: "Delete Event Architecture" });
+    const deleteDialog = page.getByRole("dialog", { name: "Delete Project" });
+    await deleteProject.click();
+    await expect(deleteDialog.getByRole("textbox")).toHaveCount(0);
+    await deleteDialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(deleteProject).toBeFocused();
+    await deleteProject.click();
+    const confirm = deleteDialog.getByRole("button", { name: "Delete Project" });
+    await expect(confirm).toHaveAttribute("data-variant", "destructive");
+    await confirm.click();
+    await expect(deleteDialog).toBeHidden();
+    await expect(deleteProject).toHaveCount(0);
+  });
+
+  await test.step("shared projects hide actions and sidebar creation opens the dialog", async () => {
     await sidebar.getByRole("tab", { name: "Shared", exact: true }).click();
-    await expect(sidebar.getByText("No shared projects yet.")).toBeVisible();
-    await expect(sidebar.getByRole("button", { name: "New Project" })).toBeDisabled();
+    const shared = sidebar.getByRole("tabpanel", { name: "Shared" });
+    await expect(shared.getByText("Event Pipeline", { exact: true })).toBeVisible();
+    await expect(shared.getByRole("button")).toHaveCount(0);
+    await sidebar.getByRole("button", { name: "New Project" }).click();
+    await expect(createDialog).toBeVisible();
+    await expect(createDialog.getByRole("textbox", { name: "Project name" })).toBeEmpty();
+    await createDialog.getByRole("button", { name: "Cancel" }).click();
+    await expect(createDialog).toBeHidden();
 
     await sidebar.getByRole("button", { name: "Close projects" }).click();
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
-    expect(await canvas.boundingBox()).toEqual(canvasBounds);
   });
 
   await test.step("mobile layout", async () => {
     await page.setViewportSize({ width: 320, height: 640 });
-    const canvasBounds = await canvas.boundingBox();
-    expect(canvasBounds).not.toBeNull();
+    const homeBounds = await home.boundingBox();
+    expect(homeBounds).not.toBeNull();
 
     await toggle.click();
     await expect(sidebar).toBeInViewport({ ratio: 1 });
-    expect(await canvas.boundingBox()).toEqual(canvasBounds);
+    expect(await home.boundingBox()).toEqual(homeBounds);
 
-    await toggle.click();
+    await page.getByRole("button", { name: "Dismiss project sidebar" })
+      .click({ position: { x: 5, y: 5 } });
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
   });
 
