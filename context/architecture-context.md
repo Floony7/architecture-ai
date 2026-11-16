@@ -34,9 +34,9 @@
 
 - Every project has a single owner (`Project.ownerId`, a Clerk user ID; no local user table).
 - Projects can include additional collaborators, uniquely identified by project and email; deleting a project cascades to its collaborator records.
-- The root proxy redirects `/` by session state and requires a Clerk session by default. Only the configured sign-in and sign-up paths and their nested steps are public application routes.
+- The root proxy redirects `/` by session state and requires a Clerk session by default. Only the configured sign-in and sign-up paths and their nested steps are public application routes. For `/api/projects` and its nested routes, the proxy initializes Clerk and delegates session enforcement to the handlers so signed-out requests return JSON 401 responses.
 - Protected resources verify the session where they read or mutate data.
-- Only the owner or a collaborator can mutate project resources.
+- Only the owner or a collaborator can mutate project resources. Project rename and delete are restricted to the owner.
 - Liveblocks room tokens are issued only after verifying project membership.
 
 ## Starter System Designs
