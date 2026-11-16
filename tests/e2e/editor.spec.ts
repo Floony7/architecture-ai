@@ -12,6 +12,9 @@ test("redirects signed-out visitors and leaves auth forms public", async ({ page
   await expect(page).toHaveURL(/\/sign-in(?:\?|$)/);
   await expect(page.getByRole("navigation", { name: "Editor" })).toHaveCount(0);
 
+  await page.goto("/editor/missing-room");
+  await expect(page).toHaveURL(/\/sign-in(?:\?|$)/);
+
   await page.goto("/sign-in-private.json");
   await expect(page).toHaveURL(/\/sign-in\?/);
 
@@ -72,7 +75,22 @@ test("editor home and sidebar manage persisted projects", async ({ page }) => {
     createdRoomId = (await createDialog.locator("code").textContent())!;
     await create.click();
     await expect(page).toHaveURL(`/editor/${createdRoomId}`);
-    // The destination workspace shell is introduced in feature 08.
+    await expect(navbar.getByRole("heading", { name: "Architecture & Events" })).toBeVisible();
+    await expect(page.getByRole("main", { name: "Architecture canvas" })).toBeVisible();
+    await expect(navbar.getByRole("button", { name: "Share project" })).toBeDisabled();
+    await navbar.getByRole("button", { name: "Open AI sidebar" }).click();
+    await expect(page.getByRole("complementary", { name: "AI assistant" })).toBeVisible();
+    await navbar.getByRole("button", { name: "Close AI sidebar" }).click();
+    await expect(page.getByRole("complementary", { name: "AI assistant" })).toBeHidden();
+    await toggle.click();
+    await expect(sidebar.getByRole("link", { name: "Architecture & Events", exact: true })).toHaveAttribute("aria-current", "page");
+    await page.setViewportSize({ width: 320, height: 640 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(320);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto("/editor/missing-room");
+    await expect(page.getByRole("heading", { name: "Access denied" })).toBeVisible();
+    await page.getByRole("link", { name: "Back to editor" }).click();
+    await expect(page).toHaveURL("/editor");
     await page.goto("/editor");
   });
 

@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Wire Editor Home (07) — Complete
+- Editor Workspace Shell (08) — Complete
 
 ## Current Goal
 
-- Editor home (07) is wired to real project data and APIs; await the next feature unit.
+- Feature 08 is implemented and verified within its shell-only scope; await the next feature unit.
 
 ## Completed
 
@@ -28,13 +28,15 @@ Update this file whenever the current phase, active feature, or implementation s
 
 - Wire Editor Home (07). Added server-side owned/shared project lists, sidebar workspace links, and `useProjectActions` for API-backed dialogs. Create previews and persists an aligned project/room ID before navigating; rename refreshes; delete refreshes or redirects to `/editor` when deleting the active room. Pending actions prevent duplicate submissions and errors remain visible for retry.
 
+- Editor Workspace Shell (08). Added the server-rendered `/editor/[roomId]` route, reusable Clerk identity and project access helpers, and a shared access-denied view for unavailable projects. The workspace shows the current project name, highlighted sidebar room, disabled share action, canvas placeholder, and toggleable AI placeholder. Existing project dialogs remain connected to their APIs. No canvas, Liveblocks, AI chat, or sharing behavior was added.
+
 ## In Progress
 
 - None.
 
 ## Next Up
 
-- Workspace shell (08), when requested: implement `/editor/[roomId]` and its access checks.
+- Await the next feature specification.
 
 ## Open Questions
 
@@ -49,6 +51,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Editor home contract (07): extends feature 06 with an optional validated `roomId` in create requests, persisted as the Project ID so room and project identity stay aligned. Omitting it retains CUID generation; raw `id` and `ownerId` remain ignored. No existing data helper was present, so `lib/projects.ts` supplies the server-side owned and primary-email collaborator queries. The workspace destination route remains feature 08.
 
 ## Session Notes
+
+- Editor Workspace Shell (08) completed on 2026-11-16. TypeScript, ESLint, the production build, and all 21 Node regression tests passed. New boundary tests cover Clerk primary-email identity, owner/collaborator query scoping, signed-out redirects before data access, denied rooms before sidebar queries, and authorized workspace props. Production HTTP verification confirmed the workspace returns a 307 redirect to sign-in when signed out. Extended the Playwright scenario for workspace controls, active-room highlighting, mobile width, and the missing-project view; signed-in browser execution remains unrun because `E2E_CLERK_USER_EMAIL` is not configured. Authorization tests use Clerk/Prisma boundary doubles; no live signed-in database round trip was run.
 
 - The production build, lint, and frozen lockfile check passed. Browser smoke checks covered all seven primitives and both Clerk screens with a light browser preference. The generated UI sources matched their installation hashes, and `cn()` merged conflicting utilities.
 

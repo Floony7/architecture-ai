@@ -13,6 +13,7 @@ interface ProjectSidebarProps {
   isOpen: boolean;
   ownedProjects: SidebarProject[];
   sharedProjects: SidebarProject[];
+  currentRoomId?: string;
   onClose: () => void;
   onNewProject: MouseEventHandler<HTMLButtonElement>;
   onProjectAction: (
@@ -27,6 +28,7 @@ export function ProjectSidebar({
   isOpen,
   ownedProjects,
   sharedProjects,
+  currentRoomId,
   onClose,
   onNewProject,
   onProjectAction,
@@ -71,7 +73,7 @@ export function ProjectSidebar({
         </Button>
       </header>
 
-      <Tabs defaultValue="my-projects" className="min-h-0 flex-1 gap-3 p-4">
+      <Tabs defaultValue={sharedProjects.some((project) => project.id === currentRoomId) ? "shared" : "my-projects"} className="min-h-0 flex-1 gap-3 p-4">
         <TabsList aria-label="Project lists" className="w-full shrink-0 rounded-xl">
           <TabsTrigger value="my-projects">My Projects</TabsTrigger>
           <TabsTrigger value="shared">Shared</TabsTrigger>
@@ -83,11 +85,15 @@ export function ProjectSidebar({
                 {projects.map((project) => (
                   <li
                     key={project.id}
-                    className="flex items-center gap-1 rounded-xl bg-elevated px-2 py-1 pl-3"
+                    className={cn(
+                      "flex items-center gap-1 rounded-xl px-2 py-1 pl-3",
+                      project.id === currentRoomId ? "bg-accent-dim text-brand ring-1 ring-brand/40" : "bg-elevated",
+                    )}
                   >
                     <Link
                       href={`/editor/${encodeURIComponent(project.id)}`}
                       onClick={onClose}
+                      aria-current={project.id === currentRoomId ? "page" : undefined}
                       className="min-w-0 flex-1 wrap-anywhere rounded-xl py-1 hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
                     >
                       {project.name}

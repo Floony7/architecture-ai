@@ -44,7 +44,13 @@
 - The editor home loads owned and shared project lists on the server through `lib/projects.ts`. Shared projects match the signed-in user's Clerk primary email, case-insensitively, and exclude owned projects.
 - `hooks/use-project-actions.ts` owns dialog state and API mutations. Initial project lists are server props; rename/delete refresh the route.
 - New editor projects use a slug plus a random 12-character suffix as both the Project ID and future Liveblocks room ID. POST accepts an optional validated `roomId`; callers omitting it retain the schema's CUID default. Client-supplied `id` and `ownerId` remain ignored. Duplicate room IDs return 409.
-- Create navigates to `/editor/[roomId]`; that route's workspace shell and access checks remain feature 08.
+- Create navigates to `/editor/[roomId]`.
+
+## Editor Workspace Shell (08)
+
+- `/editor/[roomId]` is a Server Component. `lib/project-access.ts` resolves the Clerk user ID and primary email and queries the requested project by owner or case-insensitive collaborator email.
+- Signed-out requests redirect to sign-in. Missing and inaccessible projects render the same `AccessDenied` view before sidebar lists are loaded.
+- The shared `EditorWorkspace` renders the home or current project shell from server props. Project workspaces highlight the current room and provide canvas and AI placeholders; sharing is disabled until its feature is implemented.
 
 ## Starter System Designs
 

@@ -9,6 +9,7 @@ interface EditorNavbarProps {
   isSidebarOpen: boolean;
   onSidebarToggle: () => void;
   center?: ReactNode;
+  actions?: ReactNode;
 }
 
 export function EditorNavbar({
@@ -16,13 +17,14 @@ export function EditorNavbar({
   isSidebarOpen,
   onSidebarToggle,
   center,
+  actions,
 }: EditorNavbarProps) {
   const SidebarIcon = isSidebarOpen ? PanelLeftClose : PanelLeftOpen;
 
   return (
     <nav
       aria-label="Editor"
-      className="grid h-14 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-4 border-b border-surface-border bg-surface px-4"
+      className="grid h-14 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-surface-border bg-surface px-4"
     >
       <div>
         <Button
@@ -38,8 +40,9 @@ export function EditorNavbar({
           <SidebarIcon className="size-5" aria-hidden="true" />
         </Button>
       </div>
-      <div>{center}</div>
-      <div className="flex justify-end">
+      <div className="min-w-0 text-center">{center}</div>
+      <div className="flex items-center justify-end gap-2">
+        {actions}
         <UserButton />
       </div>
     </nav>
