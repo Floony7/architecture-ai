@@ -4,7 +4,6 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Plus,
-  Share2,
   Sparkles,
 } from "lucide-react";
 import { useId, useRef, useState, type MouseEvent } from "react";
@@ -16,6 +15,7 @@ import type { SidebarProject } from "@/types/project";
 import { EditorNavbar } from "./editor-navbar";
 import { ProjectDialogs } from "./project-dialogs";
 import { ProjectSidebar } from "./project-sidebar";
+import { ShareDialog } from "./share-dialog";
 
 interface EditorWorkspaceProps {
   ownedProjects: SidebarProject[];
@@ -57,17 +57,7 @@ export function EditorWorkspace({
         actions={
           project && (
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="rounded-xl"
-                aria-label="Share project"
-                title="Sharing coming soon"
-                disabled
-              >
-                <Share2 className="size-5" aria-hidden="true" />
-              </Button>
+              <ShareDialog project={project} />
               <Button
                 type="button"
                 variant="ghost"

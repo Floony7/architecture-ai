@@ -37,7 +37,7 @@ test("redirects signed-out visitors and leaves auth forms public", async ({ page
   }
 });
 
-test("editor home and sidebar manage persisted projects", async ({ page }) => {
+test("editor home and sidebar manage persisted projects", async ({ page, context }) => {
   const emailAddress = process.env.E2E_CLERK_USER_EMAIL;
 
   if (!emailAddress) {
@@ -77,7 +77,23 @@ test("editor home and sidebar manage persisted projects", async ({ page }) => {
     await expect(page).toHaveURL(`/editor/${createdRoomId}`);
     await expect(navbar.getByRole("heading", { name: "Architecture & Events" })).toBeVisible();
     await expect(page.getByRole("main", { name: "Architecture canvas" })).toBeVisible();
-    await expect(navbar.getByRole("button", { name: "Share project" })).toBeDisabled();
+    await navbar.getByRole("button", { name: "Share project" }).click();
+    const shareDialog = page.getByRole("dialog", { name: "Share project" });
+    await expect(shareDialog).toBeVisible();
+    const collaboratorEmail = `sharing-${Date.now()}@example.com`;
+    await shareDialog.getByRole("textbox", { name: "Invite by email" }).fill(collaboratorEmail);
+    await shareDialog.getByRole("button", { name: "Invite", exact: true }).click();
+    const remove = shareDialog.getByRole("button", { name: `Remove ${collaboratorEmail}` });
+    await expect(remove).toBeVisible();
+    await remove.click();
+    await expect(remove).toHaveCount(0);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await shareDialog.getByRole("button", { name: "Copy project link" }).click();
+    await expect(shareDialog.getByRole("button", { name: "Copied!" })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(`${new URL(page.url()).origin}/editor/${createdRoomId}`);
+    await expect(shareDialog.getByRole("button", { name: "Copy project link" })).toBeVisible();
+    await shareDialog.getByRole("button", { name: "Close", exact: true }).click();
+    await expect(navbar.getByRole("button", { name: "Share project" })).toBeFocused();
     await navbar.getByRole("button", { name: "Open AI sidebar" }).click();
     await expect(page.getByRole("complementary", { name: "AI assistant" })).toBeVisible();
     await navbar.getByRole("button", { name: "Close AI sidebar" }).click();

@@ -50,7 +50,14 @@
 
 - `/editor/[roomId]` is a Server Component. `lib/project-access.ts` resolves the Clerk user ID and primary email and queries the requested project by owner or case-insensitive collaborator email.
 - Signed-out requests redirect to sign-in. Missing and inaccessible projects render the same `AccessDenied` view before sidebar lists are loaded.
-- The shared `EditorWorkspace` renders the home or current project shell from server props. Project workspaces highlight the current room and provide canvas and AI placeholders; sharing is disabled until its feature is implemented.
+- The shared `EditorWorkspace` renders the home or current project shell from server props. Project workspaces highlight the current room and provide canvas and AI placeholders.
+
+## Project Sharing (09)
+
+- `/api/projects/[projectId]/collaborators` lists collaborators with GET and accepts `{ email }` for POST invitations and DELETE removals. Listing requires project membership; mutations require ownership and retain owner constraints in database writes.
+- Invitations grant access immediately through `ProjectCollaborator`; no email delivery or local user table is introduced. New addresses are trimmed and lowercased, duplicates return 409, and removal matches email case-insensitively.
+- The listing returns `{ isOwner, collaborators }`. Clerk Backend API lookups enrich stored emails with display names and avatars; unknown users or unavailable profile lookups fall back to email. Profiles are fetched only after project access is verified.
+- The workspace Share dialog loads permissions from the server. Owners can invite, remove, and copy the project link; collaborators see the list only.
 
 ## Starter System Designs
 

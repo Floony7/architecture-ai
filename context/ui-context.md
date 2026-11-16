@@ -2,29 +2,29 @@
 
 ## Theme
 
-Dark only. No light mode. The visual language is a dark technical workspace — near-black backgrounds, layered surfaces, and vivid accent colors for interactive elements.
+Dark only. No light mode. The active alternative palette uses midnight navy backgrounds, layered blue surfaces, warm amber interactive accents, cool blue-gray text, and periwinkle AI accents.
 
 All colors are defined as CSS custom properties in `globals.css` and mapped to Tailwind tokens via `@theme inline`. Components must use these tokens — no hardcoded hex values or raw Tailwind color classes like `zinc-*`.
 
 | Role             | CSS Variable           | Hex / Value               |
 | ---------------- | ---------------------- | ------------------------- |
-| Page background  | `--bg-base`            | `#080809`                 |
-| Surface          | `--bg-surface`         | `#111114`                 |
-| Elevated surface | `--bg-elevated`        | `#18181c`                 |
-| Subtle surface   | `--bg-subtle`          | `#1e1e23`                 |
-| Default border   | `--border-default`     | `#2a2a30`                 |
-| Subtle border    | `--border-subtle`      | `#3a3a42`                 |
-| Primary text     | `--text-primary`       | `#f0f0f4`                 |
-| Secondary text   | `--text-secondary`     | `#c0c0cc`                 |
-| Muted text       | `--text-muted`         | `#808090`                 |
-| Faint text       | `--text-faint`         | `#505060`                 |
-| Brand accent     | `--accent-primary`     | `#00c8d4` (cyan)          |
-| Brand dim        | `--accent-primary-dim` | `rgba(0, 200, 212, 0.12)` |
-| AI accent        | `--accent-ai`          | `#6457f9` (indigo-purple) |
-| AI text          | `--accent-ai-text`     | `#8b82ff`                 |
-| Error            | `--state-error`        | `#ff4d4f`                 |
-| Success          | `--state-success`      | `#34d399`                 |
-| Warning          | `--state-warning`      | `#fbbf24`                 |
+| Page background  | `--bg-base`            | `#0c111b`                 |
+| Surface          | `--bg-surface`         | `#141c2a`                 |
+| Elevated surface | `--bg-elevated`        | `#1c2738`                 |
+| Subtle surface   | `--bg-subtle`          | `#243247`                 |
+| Default border   | `--border-default`     | `#34445c`                 |
+| Subtle border    | `--border-subtle`      | `#465b78`                 |
+| Primary text     | `--text-primary`       | `#e8edf5`                 |
+| Secondary text   | `--text-secondary`     | `#b9c5d6`                 |
+| Muted text       | `--text-muted`         | `#8b9ab0`                 |
+| Faint text       | `--text-faint`         | `#607189`                 |
+| Brand accent     | `--accent-primary`     | `#e8b86d` (amber)          |
+| Brand dim        | `--accent-primary-dim` | `rgba(232, 184, 109, 0.12)` |
+| AI accent        | `--accent-ai`          | `#9daeff` (periwinkle) |
+| AI text          | `--accent-ai-text`     | `#bdc9ff`                 |
+| Error            | `--state-error`        | `#f08080`                 |
+| Success          | `--state-success`      | `#7dc9a1`                 |
+| Warning          | `--state-warning`      | `#f2cf82`                 |
 
 Tailwind utility names map to these variables. Use `bg-base`, `bg-surface`, `text-copy-primary`, `text-copy-muted`, `border-surface-border`, `text-brand`, `bg-accent-dim`, etc.
 
