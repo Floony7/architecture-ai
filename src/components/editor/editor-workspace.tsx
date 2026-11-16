@@ -4,17 +4,23 @@ import { Plus } from "lucide-react";
 import { useId, useRef, useState, type MouseEvent } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useProjectActions } from "@/hooks/use-project-actions";
+import type { SidebarProject } from "@/types/project";
 
 import { EditorNavbar } from "./editor-navbar";
 import { ProjectDialogs } from "./project-dialogs";
 import { ProjectSidebar } from "./project-sidebar";
-import { useProjectDialogs } from "./use-project-dialogs";
 
-export function EditorWorkspace() {
+interface EditorWorkspaceProps {
+  ownedProjects: SidebarProject[];
+  sharedProjects: SidebarProject[];
+}
+
+export function EditorWorkspace({ ownedProjects, sharedProjects }: EditorWorkspaceProps) {
   const sidebarId = useId();
   const sidebarCreateButton = useRef<HTMLButtonElement>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const projectDialogs = useProjectDialogs();
+  const projectDialogs = useProjectActions();
 
   function openCreateDialog(event: MouseEvent<HTMLButtonElement>) {
     projectDialogs.openDialog({ type: "create" }, event.currentTarget);
@@ -59,7 +65,8 @@ export function EditorWorkspace() {
         <ProjectSidebar
           id={sidebarId}
           isOpen={isSidebarOpen}
-          projects={projectDialogs.projects}
+          ownedProjects={ownedProjects}
+          sharedProjects={sharedProjects}
           onClose={closeSidebar}
           onNewProject={openCreateDialog}
           onProjectAction={projectDialogs.openDialog}
@@ -69,6 +76,8 @@ export function EditorWorkspace() {
       <ProjectDialogs
         dialog={projectDialogs.dialog}
         name={projectDialogs.name}
+        roomId={projectDialogs.roomId}
+        error={projectDialogs.error}
         isPending={projectDialogs.isPending}
         onNameChange={projectDialogs.setName}
         onSubmit={projectDialogs.submitDialog}

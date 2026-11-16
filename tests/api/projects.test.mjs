@@ -34,9 +34,11 @@ function fixture(userId = "owner") {
     "@/lib/prisma": { prisma: { project: database } },
     "@/generated/prisma/client": { Prisma: { PrismaClientKnownRequestError: class extends Error {} } },
   };
+  dependencies["@/lib/project-room"] = loadModule("src/lib/project-room.ts", {});
   dependencies["@/lib/project-api"] = loadModule("src/lib/project-api.ts", dependencies);
   return {
     database,
+    KnownRequestError: dependencies["@/generated/prisma/client"].Prisma.PrismaClientKnownRequestError,
     ...loadModule("app/api/projects/route.ts", dependencies),
     ...loadModule("app/api/projects/[projectId]/route.ts", dependencies),
   };
@@ -138,4 +140,35 @@ test("owner can rename and delete; writes retain the owner predicate", async () 
   assert.deepEqual(plain(api.database.delete.mock.calls[0].arguments[0]), {
     where: { id: "cuid-project", ownerId: "owner" },
   });
+});
+
+
+test("create persists a validated room ID while ignoring forged ID and owner", async () => {
+  const api = fixture();
+  const response = await api.POST(request("POST", { name: "Payments", roomId: "payments-123456abcdef", id: "forged", ownerId: "forged" }));
+  assert.equal(response.status, 201);
+  assert.deepEqual(plain(api.database.create.mock.calls[0].arguments[0]), {
+    data: { id: "payments-123456abcdef", name: "Payments", ownerId: "owner" },
+  });
+});
+
+test("create rejects malformed room IDs before database access", async () => {
+  for (const roomId of [null, 42, "../escape", "no-suffix", "a".repeat(200)]) {
+    const api = fixture();
+    const response = await api.POST(request("POST", { name: "Payments", roomId }));
+    assert.equal(response.status, 400);
+    assert.equal(api.database.create.mock.callCount(), 0);
+  }
+});
+
+
+test("duplicate room IDs return 409 without overwriting the existing project", async () => {
+  const api = fixture();
+  api.database.create.mock.mockImplementation(async () => {
+    throw Object.assign(new api.KnownRequestError("Duplicate"), { code: "P2002" });
+  });
+  const response = await api.POST(request("POST", { name: "Payments", roomId: "payments-123456abcdef" }));
+  assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /Room ID already exists/);
+  assert.equal(api.database.update.mock.callCount(), 0);
 });

@@ -5,24 +5,18 @@ import { Dialog, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
 import { EditorDialogContent } from "./editor-dialog-content";
-import type { ProjectDialog } from "./use-project-dialogs";
+import type { ProjectDialog } from "@/types/project";
 
 interface ProjectDialogsProps {
   dialog: ProjectDialog | null;
   name: string;
+  roomId: string;
+  error: string | null;
   isPending: boolean;
   onNameChange: (name: string) => void;
   onSubmit: () => void;
   onClose: () => void;
   onRestoreFocus: () => void;
-}
-
-function projectSlug(name: string) {
-  return name
-    .normalize()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\p{M}]+/gu, "-")
-    .replace(/^-|-$/g, "");
 }
 
 const titles = {
@@ -34,6 +28,8 @@ const titles = {
 export function ProjectDialogs({
   dialog,
   name,
+  roomId,
+  error,
   isPending,
   onNameChange,
   onSubmit,
@@ -72,7 +68,12 @@ export function ProjectDialogs({
         footer={
           <>
             <DialogClose asChild>
-              <Button type="button" variant="outline" className="rounded-xl">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl"
+                disabled={isPending}
+              >
                 Cancel
               </Button>
             </DialogClose>
@@ -104,20 +105,26 @@ export function ProjectDialogs({
               <Input
                 id={nameId}
                 value={name}
+                disabled={isPending}
                 onChange={(event) => onNameChange(event.target.value)}
                 aria-describedby={isCreate ? slugId : undefined}
-                className="rounded-xl"
+                className="rounded-xl text-white"
                 required
               />
               {isCreate && (
                 <p id={slugId} className="wrap-anywhere text-copy-muted">
-                  Slug preview:{" "}
-                  <code className="font-mono">{projectSlug(name) || "—"}</code>
+                  Room ID preview:{" "}
+                  <code className="font-mono">{roomId || "—"}</code>
                 </p>
               )}
             </>
           )}
         </form>
+        {error && (
+          <p role="alert" className="text-error">
+            {error}
+          </p>
+        )}
       </EditorDialogContent>
     </Dialog>
   );

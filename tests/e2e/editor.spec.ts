@@ -34,7 +34,7 @@ test("redirects signed-out visitors and leaves auth forms public", async ({ page
   }
 });
 
-test("editor home and sidebar manage mock projects", async ({ page }) => {
+test("editor home and sidebar manage persisted projects", async ({ page }) => {
   const emailAddress = process.env.E2E_CLERK_USER_EMAIL;
 
   if (!emailAddress) {
@@ -53,7 +53,9 @@ test("editor home and sidebar manage mock projects", async ({ page }) => {
   const sidebar = page.getByRole("complementary", { name: "Projects" });
   const createDialog = page.getByRole("dialog", { name: "Create Project" });
 
-  await test.step("create a project from the home and preview its slug", async () => {
+  let createdRoomId = "";
+
+  await test.step("create a project from the home and preview its room ID", async () => {
     await expect(toggle).toHaveAttribute("aria-expanded", "false");
     await expect(home.getByRole("heading", {
       name: "Create a project or open an existing one",
@@ -64,12 +66,14 @@ test("editor home and sidebar manage mock projects", async ({ page }) => {
     const create = createDialog.getByRole("button", { name: "Create Project" });
     await expect(create).toBeDisabled();
     await projectName.fill("Architecture");
-    await expect(createDialog.getByText("architecture", { exact: true })).toBeVisible();
+    await expect(createDialog.locator("code")).toHaveText(/^architecture-[a-f0-9]{12}$/);
     await projectName.fill("Architecture & Events");
-    await expect(createDialog.getByText("architecture-events", { exact: true })).toBeVisible();
+    await expect(createDialog.locator("code")).toHaveText(/^architecture-events-[a-f0-9]{12}$/);
+    createdRoomId = (await createDialog.locator("code").textContent())!;
     await create.click();
-    await expect(createDialog).toBeHidden();
-    await expect(newProject).toBeFocused();
+    await expect(page).toHaveURL(`/editor/${createdRoomId}`);
+    // The destination workspace shell is introduced in feature 08.
+    await page.goto("/editor");
   });
 
   await test.step("rename and delete an owned project", async () => {
@@ -79,7 +83,7 @@ test("editor home and sidebar manage mock projects", async ({ page }) => {
     await expect(toggle).toHaveAttribute("aria-expanded", "true");
     await expect(sidebar).toBeInViewport({ ratio: 1 });
     expect(await home.boundingBox()).toEqual(homeBounds);
-    await expect(sidebar.getByText("Payments Platform", { exact: true })).toBeVisible();
+    await expect(sidebar.getByRole("link", { name: "Architecture & Events", exact: true })).toHaveAttribute("href", `/editor/${createdRoomId}`);
 
     await sidebar.getByRole("button", { name: "Rename Architecture & Events" }).click();
     const renameDialog = page.getByRole("dialog", { name: "Rename Project" });
@@ -109,7 +113,6 @@ test("editor home and sidebar manage mock projects", async ({ page }) => {
   await test.step("shared projects hide actions and sidebar creation opens the dialog", async () => {
     await sidebar.getByRole("tab", { name: "Shared", exact: true }).click();
     const shared = sidebar.getByRole("tabpanel", { name: "Shared" });
-    await expect(shared.getByText("Event Pipeline", { exact: true })).toBeVisible();
     await expect(shared.getByRole("button")).toHaveCount(0);
     await sidebar.getByRole("button", { name: "New Project" }).click();
     await expect(createDialog).toBeVisible();

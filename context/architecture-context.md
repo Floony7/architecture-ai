@@ -39,6 +39,13 @@
 - Only the owner or a collaborator can mutate project resources. Project rename and delete are restricted to the owner.
 - Liveblocks room tokens are issued only after verifying project membership.
 
+## Editor Project Data (07)
+
+- The editor home loads owned and shared project lists on the server through `lib/projects.ts`. Shared projects match the signed-in user's Clerk primary email, case-insensitively, and exclude owned projects.
+- `hooks/use-project-actions.ts` owns dialog state and API mutations. Initial project lists are server props; rename/delete refresh the route.
+- New editor projects use a slug plus a random 12-character suffix as both the Project ID and future Liveblocks room ID. POST accepts an optional validated `roomId`; callers omitting it retain the schema's CUID default. Client-supplied `id` and `ownerId` remain ignored. Duplicate room IDs return 409.
+- Create navigates to `/editor/[roomId]`; that route's workspace shell and access checks remain feature 08.
+
 ## Starter System Designs
 
 - Prebuilt templates are static canvas snapshots stored in the codebase.

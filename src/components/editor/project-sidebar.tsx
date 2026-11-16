@@ -1,16 +1,18 @@
 import { Pencil, Plus, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import type { MouseEventHandler, Ref } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-import type { MockProject, ProjectDialog } from "./use-project-dialogs";
+import type { SidebarProject, ProjectDialog } from "@/types/project";
 
 interface ProjectSidebarProps {
   id: string;
   isOpen: boolean;
-  projects: MockProject[];
+  ownedProjects: SidebarProject[];
+  sharedProjects: SidebarProject[];
   onClose: () => void;
   onNewProject: MouseEventHandler<HTMLButtonElement>;
   onProjectAction: (
@@ -23,7 +25,8 @@ interface ProjectSidebarProps {
 export function ProjectSidebar({
   id,
   isOpen,
-  projects,
+  ownedProjects,
+  sharedProjects,
   onClose,
   onNewProject,
   onProjectAction,
@@ -32,12 +35,14 @@ export function ProjectSidebar({
   const projectGroups = [
     {
       tab: "my-projects",
-      projects: projects.filter((project) => project.isOwned),
+      projects: ownedProjects,
+      isOwned: true,
       emptyMessage: "No projects yet.",
     },
     {
       tab: "shared",
-      projects: projects.filter((project) => !project.isOwned),
+      projects: sharedProjects,
+      isOwned: false,
       emptyMessage: "No shared projects yet.",
     },
   ];
@@ -71,7 +76,7 @@ export function ProjectSidebar({
           <TabsTrigger value="my-projects">My Projects</TabsTrigger>
           <TabsTrigger value="shared">Shared</TabsTrigger>
         </TabsList>
-        {projectGroups.map(({ tab, projects, emptyMessage }) => (
+        {projectGroups.map(({ tab, projects, isOwned, emptyMessage }) => (
           <TabsContent key={tab} value={tab} className="overflow-y-auto">
             {projects.length ? (
               <ul className="space-y-1">
@@ -80,8 +85,14 @@ export function ProjectSidebar({
                     key={project.id}
                     className="flex items-center gap-1 rounded-xl bg-elevated px-2 py-1 pl-3"
                   >
-                    <span className="min-w-0 flex-1 wrap-anywhere py-1">{project.name}</span>
-                    {project.isOwned && (
+                    <Link
+                      href={`/editor/${encodeURIComponent(project.id)}`}
+                      onClick={onClose}
+                      className="min-w-0 flex-1 wrap-anywhere rounded-xl py-1 hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
+                    >
+                      {project.name}
+                    </Link>
+                    {isOwned && (
                       <>
                         <Button
                           type="button"

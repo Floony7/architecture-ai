@@ -1,8 +1,10 @@
 import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isProjectRoomId } from "@/lib/project-room";
 
 interface ProjectNameInput {
   name: string;
+  roomId?: string;
 }
 
 export async function readProjectName(
@@ -30,6 +32,13 @@ export async function readProjectName(
     );
   }
 
+  if (defaultName && "roomId" in body) {
+    if (!isProjectRoomId(body.roomId)) {
+      return Response.json({ error: "Invalid room ID" }, { status: 400 });
+    }
+    return { name: name.trim(), roomId: body.roomId };
+  }
+
   return { name: name.trim() };
 }
 
@@ -54,6 +63,9 @@ export async function checkProjectOwner(
 }
 
 export function projectApiError(error: unknown): Response {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    return Response.json({ error: "Room ID already exists. Open a new create dialog and try again." }, { status: 409 });
+  }
   if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
     return Response.json({ error: "Project not found" }, { status: 404 });
   }

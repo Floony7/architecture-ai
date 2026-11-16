@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Project APIs (06) — Complete
+- Wire Editor Home (07) — Complete
 
 ## Current Goal
 
-- Backend-only Project APIs (06) implemented and verified; await the next feature unit.
+- Editor home (07) is wired to real project data and APIs; await the next feature unit.
 
 ## Completed
 
@@ -26,13 +26,15 @@ Update this file whenever the current phase, active feature, or implementation s
 
 - Project APIs (06). Added authenticated list/create/rename/delete handlers, owner-scoped listing, default create names, existing Prisma IDs, owner-only mutations, JSON validation/errors, and focused API regression tests. UI remains unchanged.
 
+- Wire Editor Home (07). Added server-side owned/shared project lists, sidebar workspace links, and `useProjectActions` for API-backed dialogs. Create previews and persists an aligned project/room ID before navigating; rename refreshes; delete refreshes or redirects to `/editor` when deleting the active room. Pending actions prevent duplicate submissions and errors remain visible for retry.
+
 ## In Progress
 
 - None.
 
 ## Next Up
 
-- Await the next feature unit.
+- Workspace shell (08), when requested: implement `/editor/[roomId]` and its access checks.
 
 ## Open Questions
 
@@ -43,6 +45,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Add decisions that affect the system design or data model.
 
 - Project API contract (06): list returns `{ projects }` for the authenticated owner's projects; create/rename return `{ project }` (201/200), delete returns 204, and errors return `{ error }`. Missing records return 404. JSON object bodies accept a non-empty trimmed `name`; an omitted create name defaults to `Untitled Project`. Only name is accepted into mutations; owner and ID always come from Clerk and Prisma respectively.
+
+- Editor home contract (07): extends feature 06 with an optional validated `roomId` in create requests, persisted as the Project ID so room and project identity stay aligned. Omitting it retains CUID generation; raw `id` and `ownerId` remain ignored. No existing data helper was present, so `lib/projects.ts` supplies the server-side owned and primary-email collaborator queries. The workspace destination route remains feature 08.
 
 ## Session Notes
 
@@ -61,3 +65,5 @@ Update this file whenever the current phase, active feature, or implementation s
 - Prisma setup (05) completed on 2026-11-12 with Prisma ORM 7.10.1. Applied 20261111090000_init_projects using the connection loaded from .env.local and regenerated the client. Schema validation passed, migration status is up to date, and schema diff found no differences. Read-only counts through the application singleton returned zero projects and zero collaborators; development singleton reuse passed. The production build script (Prisma generation and Next.js build, including TypeScript) passed using pnpm with the Node executable directory on PATH. All feature 05 checks are complete.
 
 - Project APIs (06) completed on 2026-11-12. Eight handler tests passed via node --test tests/api/projects.test.mjs, covering signed-out access, owner-scoped listing, creation defaults and forged fields, invalid input, owner/non-owner mutations, and missing records. TypeScript and lint passed. The production build script (Prisma generation and Next.js build) passed using pnpm --config.verifyDepsBeforeRun=false run build; npm is unavailable in this shell. Production HTTP checks at localhost verified JSON 401 responses for all four endpoints and preserved the editor sign-in redirect. The test server required the bundled Node directory on PATH. Authenticated handler tests use Clerk/Prisma boundary doubles; a live signed-in database round trip was not run.
+
+- Wire Editor Home (07) completed on 2026-11-16. All 18 focused Node regression tests passed, covering existing API authorization plus server query scoping, room ID validation and persistence, duplicate-ID conflicts, create navigation, rename refresh, both delete paths, errors, and pending submission guards. ESLint, TypeScript, and the production build passed. Used `pnpm --config.verifyDepsBeforeRun=false run build` because npm is unavailable; the build needed network access for existing Google Fonts. Updated the Playwright scenario for persisted projects; signed-in browser execution was not run because `E2E_CLERK_USER_EMAIL` is not configured. Tests use Clerk/Prisma/router boundary doubles; no live signed-in database round trip was run. The create destination is intentionally the feature 08 route, which is not implemented yet.

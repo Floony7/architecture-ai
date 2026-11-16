@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
   try {
     const project = await prisma.project.create({
-      data: { name: input.name, ownerId: userId },
+      data: { name: input.name, ownerId: userId, ...(input.roomId ? { id: input.roomId } : {}) },
     });
 
     return Response.json({ project }, { status: 201 });
