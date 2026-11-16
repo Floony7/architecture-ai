@@ -12,6 +12,8 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Completed
 
+- PostgreSQL SSL startup warning (2026-11-16). Changed the local `DATABASE_URL` from `sslmode=require` to `sslmode=verify-full`, preserving the pg driver's current certificate and hostname verification behavior without its compatibility warning. Other environments need the same connection setting if they use the deprecated alias.
+
 - Alternative dark palette preview (2026-11-16). Applied midnight navy surfaces, amber controls, blue-gray text, periwinkle AI accents, and coordinated status colors through the shared CSS tokens. Updated the UI palette documentation.
 
 - Design system and UI primitives (01). Installed shadcn/ui, all seven requested primitives, and Lucide React. Added the shared cn() helper and applied the dark palette to the app and Clerk screens.
@@ -55,6 +57,8 @@ Update this file whenever the current phase, active feature, or implementation s
 - Editor home contract (07): extends feature 06 with an optional validated `roomId` in create requests, persisted as the Project ID so room and project identity stay aligned. Omitting it retains CUID generation; raw `id` and `ownerId` remain ignored. No existing data helper was present, so `lib/projects.ts` supplies the server-side owned and primary-email collaborator queries. The workspace destination route remains feature 08.
 
 ## Session Notes
+
+- SSL configuration verification: the installed pg connection parser reported TLS enabled, certificate verification enabled, and zero warnings. A live read-only `SELECT 1` through pg passed with an authorized TLS connection and zero SSL-mode warnings. The initial sandboxed connection was blocked with EACCES; the permitted network check passed. No application code, Prisma 7.10.1 dependencies, schema, or data changed. Restart the development server to replace the cached Prisma connection pool.
 
 - Alternative palette verification passed the production build, including Prisma generation and TypeScript. Contrast checks passed at 4.5:1 or higher for primary/secondary/muted text, button labels, brand/AI accents, and status colors on their intended surfaces. Signed-in visual verification was not run.
 
