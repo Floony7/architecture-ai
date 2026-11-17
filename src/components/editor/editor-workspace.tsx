@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useProjectActions } from "@/hooks/use-project-actions";
 import type { SidebarProject } from "@/types/project";
 
+import { EditorCanvas } from "./editor-canvas";
 import { EditorNavbar } from "./editor-navbar";
 import { ProjectDialogs } from "./project-dialogs";
 import { ProjectSidebar } from "./project-sidebar";
@@ -85,16 +86,9 @@ export function EditorWorkspace({
           <div className="flex h-full min-h-0">
             <main
               aria-label="Architecture canvas"
-              className="grid min-w-0 flex-1 place-items-center overflow-y-auto bg-base p-6"
+              className="min-w-0 flex-1 bg-base"
             >
-              <div className="max-w-md text-center">
-                <h2 className="text-xl font-semibold">
-                  Your architecture canvas
-                </h2>
-                <p className="mt-2 text-copy-muted">
-                  Your system design will take shape here.
-                </p>
-              </div>
+              <EditorCanvas roomId={project.id} />
             </main>
             {isAiSidebarOpen && (
               <aside

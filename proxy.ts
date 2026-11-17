@@ -8,8 +8,11 @@ const publicAuthPaths = [signInPath, signUpPath];
 export default clerkMiddleware(async (auth, request) => {
   const { pathname } = request.nextUrl;
 
-  // Project handlers enforce authentication and return API-specific 401 JSON.
-  if (pathname === "/api/projects" || pathname.startsWith("/api/projects/")) {
+  // These handlers enforce authentication and return API-specific 401 JSON.
+  if (
+    pathname === "/api/projects" || pathname.startsWith("/api/projects/") ||
+    pathname === "/api/liveblocks-auth"
+  ) {
     return;
   }
 

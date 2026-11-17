@@ -7,6 +7,9 @@
 :root {
   color-scheme: dark;
 
+  --canvas-node-text: #EDEDED;
+  --canvas-handle: #ffffff;
+
   --bg-base: #0c111b;
   --bg-surface: #141c2a;
   --bg-elevated: #1c2738;
@@ -85,6 +88,7 @@
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-geist-sans);
 
+  --color-node-label: var(--canvas-node-text);
   --color-base: var(--bg-base);
   --color-surface: var(--bg-surface);
   --color-elevated: var(--bg-elevated);

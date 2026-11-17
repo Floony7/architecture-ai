@@ -64,7 +64,7 @@ Radius increases with surface depth — smaller for inner elements, larger for o
 | `#0F2E18` | `#62C073`  | Green                  |
 | `#062822` | `#0AC7B4`  | Teal                   |
 
-Default node color: `#1F1F1F` with `#EDEDED` text.
+Default node color: `#1F1F1F` with `#EDEDED` text. The default stored fill is `DEFAULT_NODE_COLOR` in `src/types/canvas.ts`; `--canvas-node-text` and `--canvas-handle` define the basic renderer label and handle colors.
 
 ### Edge Style
 
@@ -84,6 +84,10 @@ Smooth-step path with an arrow marker. Default edge color: `#f8fafc`. Stroke wid
 ### Connection Handles
 
 Small white circular handles, hidden by default, revealed on node hover. Appear at all four sides of a node.
+
+### Shape Panel (12)
+
+A floating pill toolbar sits at the bottom center of the canvas with six draggable Lucide icon buttons. It uses surface, border, and text tokens. Default shape sizes live in `SHAPE_SIZES` in `src/types/canvas.ts`. In feature 12 all new shapes render as simple bordered rectangles with centered labels; shape-specific geometry comes in feature 13. On narrow canvases, a container query raises the toolbar above the Liveblocks badge and positions the minimap above it, including when a sidebar narrows a desktop workspace.
 
 ### Canvas Background
 

@@ -1,0 +1,46 @@
+.canvas-wrapper {
+  container: architecture-canvas / inline-size;
+}
+
+.architecture-flow.react-flow {
+  --xy-background-color: var(--bg-base);
+  --xy-background-pattern-color: var(--border-default);
+  --xy-minimap-background-color: var(--bg-surface);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--bg-base) 65%, transparent);
+  --xy-minimap-node-background-color: var(--bg-subtle);
+  --xy-minimap-node-stroke-color: var(--border-default);
+  --xy-attribution-background-color: var(--bg-surface);
+}
+
+.architecture-flow .react-flow__minimap {
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  border-radius: calc(var(--radius) * 1.4);
+}
+
+.architecture-flow .react-flow__attribution a {
+  color: var(--text-muted);
+}
+
+.architecture-flow .canvas-node-handle {
+  width: 8px;
+  height: 8px;
+  background: var(--canvas-handle);
+  border-color: var(--bg-base);
+  opacity: 0;
+}
+
+.architecture-flow .canvas-node:hover .canvas-node-handle,
+.architecture-flow .canvas-node:focus-within .canvas-node-handle {
+  opacity: 1;
+}
+
+@container architecture-canvas (max-width: 640px) {
+  .architecture-flow .shape-panel {
+    bottom: 36px;
+  }
+
+  .architecture-flow .react-flow__minimap {
+    bottom: 112px;
+  }
+}

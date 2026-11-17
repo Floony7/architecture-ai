@@ -2,6 +2,7 @@
   "name": "architecture-ai",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.25.0",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -15,9 +16,15 @@
   "dependencies": {
     "@clerk/nextjs": "^7.9.25",
     "@clerk/ui": "^1.42.4",
+    "@liveblocks/client": "^3.25.1",
+    "@liveblocks/node": "3.25.1",
+    "@liveblocks/react": "^3.25.1",
+    "@liveblocks/react-flow": "^3.25.1",
+    "@liveblocks/react-ui": "^3.25.1",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "@prisma/extension-accelerate": "^3.0.1",
+    "@xyflow/react": "^12.12.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
     "lucide-react": "^1.70.0",

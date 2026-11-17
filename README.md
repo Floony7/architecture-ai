@@ -11,11 +11,13 @@ The goal is simple: describe a system, shape its architecture on a shared canvas
 - **Sharing by email.** Owners can grant access, remove collaborators, and copy a project link. Collaborators can open shared projects and view the member list.
 - **A dark editor shell.** Project navigation, account controls, a Share dialog, and a toggleable AI sidebar are in place.
 
-Sharing grants access immediately to the matching signed-in email address; it doesn't send an invitation email. The architecture canvas and AI assistant currently show placeholders. Real-time diagram editing, starter designs, AI generation, and Markdown spec export are still ahead.
+Sharing grants access immediately to the matching signed-in email address; it doesn't send an invitation email. Project workspaces open a Liveblocks-backed React Flow canvas with a minimap, dot background, and six-shape drag toolbar. Dropped nodes sync with collaborators and currently render as simple rectangles. Shape-specific rendering, starter designs, AI generation, and Markdown spec export are still ahead; the AI assistant currently shows a placeholder.
 
 ## Run it locally
 
-You'll need Node.js, pnpm, a PostgreSQL database, and a Clerk application.
+You'll need Node.js, pnpm 11.25.0 (pinned in `package.json`), a PostgreSQL database, and a Clerk application.
+
+Use pnpm for dependency changes: `pnpm add <package>` or `pnpm add -D <package>`. The project uses `pnpm-lock.yaml` and pnpm's linked `node_modules` layout; running `npm install` against that layout can crash npm's dependency resolver with `Cannot read properties of null (reading 'matches')`.
 
 Install the dependencies:
 
@@ -29,9 +31,12 @@ Create `.env.local` in the project root with your own connection details and Cle
 DATABASE_URL=your_postgresql_connection_string
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
 CLERK_SECRET_KEY=your_clerk_secret_key
+LIVEBLOCKS_SECRET_KEY=your_liveblocks_secret_key
 NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 ```
+
+Keep the Liveblocks secret server-side. The project-authorized `/api/liveblocks-auth` endpoint uses it to create private rooms and issue room-scoped sessions. Project workspaces connect the base canvas through this endpoint.
 
 Generate the Prisma client, apply the database migrations, and start the app:
 
@@ -49,7 +54,7 @@ The current app uses Next.js 16 and React 19 with TypeScript, Tailwind CSS, shad
 
 Routes and API handlers live in `app/`. Editor components, hooks, and shared helpers live in `src/`. The database schema and migrations live in `prisma/`.
 
-The planned canvas, background AI tasks, and artifact storage are described in `context/`; their integrations aren't implemented yet.
+Liveblocks room authentication is implemented. The planned shape tools, background AI tasks, and artifact storage are described in `context/`; those integrations aren't implemented yet.
 
 ## Checking changes
 
@@ -61,7 +66,21 @@ pnpm build
 
 The Node regression suite covers project APIs, access checks, sharing, and client action behavior using boundary doubles. The production build also generates Prisma Client and checks TypeScript.
 
-For browser tests:
+For the isolated base canvas browser check (requires the Liveblocks secret and installed Microsoft Edge):
+
+```sh
+node tests/browser/base-canvas.mjs
+```
+
+This starts a fixture on port 3111, tests shape payloads and drag/drop creation plus two-client synchronization against a temporary private Liveblocks room, saves screenshots under `test-results/`, and removes the room and fixture afterward. The fixture replaces Clerk authentication only for this canvas integration check.
+
+To check workspace navigation streaming with delayed profile data in an isolated Next.js fixture (no Clerk credentials needed):
+
+```sh
+node tests/browser/workspace-streaming.mjs
+```
+
+For full application browser tests:
 
 ```sh
 pnpm exec playwright install chromium

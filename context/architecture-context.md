@@ -48,6 +48,7 @@
 
 ## Editor Workspace Shell (08)
 
+- `/editor/[roomId]/loading.tsx` reuses the editor loading UI and creates a route-local Suspense boundary for Clerk profile and project reads during initial rendering and client navigation.
 - `/editor/[roomId]` is a Server Component. `lib/project-access.ts` resolves the Clerk user ID and primary email and queries the requested project by owner or case-insensitive collaborator email.
 - Signed-out requests redirect to sign-in. Missing and inaccessible projects render the same `AccessDenied` view before sidebar lists are loaded.
 - The shared `EditorWorkspace` renders the home or current project shell from server props. Project workspaces highlight the current room and provide canvas and AI placeholders.
@@ -58,6 +59,28 @@
 - Invitations grant access immediately through `ProjectCollaborator`; no email delivery or local user table is introduced. New addresses are trimmed and lowercased, duplicates return 409, and removal matches email case-insensitively.
 - The listing returns `{ isOwner, collaborators }`. Clerk Backend API lookups enrich stored emails with display names and avatars; unknown users or unavailable profile lookups fall back to email. Profiles are fetched only after project access is verified.
 - The workspace Share dialog loads permissions from the server. Owners can invite, remove, and copy the project link; collaborators see the list only.
+
+## Liveblocks Infrastructure (10)
+
+- `liveblocks.config.ts` defines nullable cursor coordinates and `isThinking` presence, plus user ID, display name, avatar, and cursor color metadata.
+- `src/lib/liveblocks.ts` lazily caches the server-only Node SDK client on `globalThis`, using `LIVEBLOCKS_SECRET_KEY`. Sessions and tokens are never cached.
+- `POST /api/liveblocks-auth` accepts `{ room: projectId }`, requires a Clerk session, and verifies owner or primary-email collaborator access through `getAccessibleProject`. Missing and inaccessible projects return 403; signed-out requests return JSON 401 through the handler.
+- After authorization, the route gets or creates a private room (`defaultAccesses: []`) and issues full access to that exact project room only. Session metadata comes from Clerk and a fixed deterministic user-ID color palette in `src/lib/user-color.ts`.
+- This feature provides infrastructure only. Canvas mounting and room providers belong to subsequent features.
+
+## Base Canvas (11)
+
+- The workspace page remains server-rendered and performs project access checks before rendering the client workspace. Its canvas area mounts `EditorCanvas` with the authorized project ID.
+- `EditorCanvas` sets up `LiveblocksProvider` with `/api/liveblocks-auth`, a room keyed by project ID, initial presence `{ cursor: null, isThinking: false }`, and client-only suspense. A render error boundary plus room error/failed-connection listeners show a connection fallback, including failures before storage loads.
+- `BaseCanvas` uses `useLiveblocksFlow` with suspense and empty initial nodes/edges. Its synced arrays and node/edge/connect/delete handlers drive React Flow. The hook owns its Liveblocks Storage representation; no separate persistence or autosave layer is introduced.
+- Shared types live in `src/types/canvas.ts`: `CanvasNodeData` supports label, color, and the six documented shapes; node/edge types use the `canvasNode` and `canvasEdge` literals. No custom renderers are registered in this unit.
+- The base canvas has loose connections, fitView, a minimap, and dot background, styled with the shared dark theme tokens. Controls, shape creation/rendering, AI behavior, and artifact persistence remain later features.
+
+## Shape Panel (12)
+
+- A bottom-center floating shape toolbar supplies rectangle, diamond, circle, pill, cylinder, and hexagon drags. Shared defaults are defined alongside the canvas types: rectangle 160×96, diamond 180×140, circle 120×120, pill 160×80, cylinder 140×120, and hexagon 160×120.
+- The drag payload carries shape, width, and height under a dedicated MIME type. The canvas wrapper validates it, converts the screen drop point through React Flow, and adds a canvasNode using the Liveblocks-synced node change handler. Node data starts with an empty label, the documented neutral color, and the dragged shape. IDs combine the shape, timestamp, and an incrementing counter.
+- A ReactFlowProvider supplies coordinate conversion to the canvas content. The basic canvasNode renderer draws every shape as a bordered rectangle with a centered label. Shape-specific visuals, resizing, label editing, and ghost previews remain subsequent units.
 
 ## Starter System Designs
 
