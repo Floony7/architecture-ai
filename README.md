@@ -1,48 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Architecture AI
 
-## Feature Implementation with AI
-Create a specific feature by adding a specs file to `/context/feature-specs`. This file in cojuction with the `AGENTS.md` is used by the agent to implement the feature.
+A workspace for turning system design ideas into something your team can build together.
 
-Prompt example:
-read `01-design-system.md`
-update `progress-tracker.md` to mark this as in progress then implement exactly as specified
+The goal is simple: describe a system, shape its architecture on a shared canvas, and turn the result into a technical specification. We're building toward that one feature at a time. Today, the app gives you a place to create projects, share access, and bring your team into the same workspace.
 
-## Start Development Server
+## What works today
 
-First, run the development server:
+- **Your own workspace.** Sign up or sign in with Clerk, then browse projects you own and projects shared with you.
+- **Project management.** Create a project, give it a name, open its workspace, and rename or delete projects you own. Project data is saved in PostgreSQL.
+- **Sharing by email.** Owners can grant access, remove collaborators, and copy a project link. Collaborators can open shared projects and view the member list.
+- **A dark editor shell.** Project navigation, account controls, a Share dialog, and a toggleable AI sidebar are in place.
 
-```bash
-npm run dev
+Sharing grants access immediately to the matching signed-in email address; it doesn't send an invitation email. The architecture canvas and AI assistant currently show placeholders. Real-time diagram editing, starter designs, AI generation, and Markdown spec export are still ahead.
+
+## Run it locally
+
+You'll need Node.js, pnpm, a PostgreSQL database, and a Clerk application.
+
+Install the dependencies:
+
+```sh
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create `.env.local` in the project root with your own connection details and Clerk keys:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```dotenv
+DATABASE_URL=your_postgresql_connection_string
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+CLERK_SECRET_KEY=your_clerk_secret_key
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Generate the Prisma client, apply the database migrations, and start the app:
 
-## Editor browser tests
+```sh
+pnpm db:generate
+pnpm db:migrate
+pnpm dev
+```
 
-The editor is at `/editor` and requires a Clerk session. To run its Playwright tests, configure a Clerk development instance in `.env.local` with `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, and `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`. Set `E2E_CLERK_USER_EMAIL` to an existing development test user without MFA or pending session tasks. Use a `+clerk_test` address to suppress test email delivery.
+Open [localhost:3000](http://localhost:3000), sign in, and create your first project. The editor lives at `/editor`.
+
+## Under the hood
+
+The current app uses Next.js 16 and React 19 with TypeScript, Tailwind CSS, shadcn/ui, and Lucide icons. Clerk handles authentication, while Prisma 7 connects project and collaborator data to PostgreSQL.
+
+Routes and API handlers live in `app/`. Editor components, hooks, and shared helpers live in `src/`. The database schema and migrations live in `prisma/`.
+
+The planned canvas, background AI tasks, and artifact storage are described in `context/`; their integrations aren't implemented yet.
+
+## Checking changes
+
+```sh
+pnpm lint
+pnpm test:api
+pnpm build
+```
+
+The Node regression suite covers project APIs, access checks, sharing, and client action behavior using boundary doubles. The production build also generates Prisma Client and checks TypeScript.
+
+For browser tests:
 
 ```sh
 pnpm exec playwright install chromium
 pnpm test:e2e
 ```
 
-Playwright builds and starts the app on port 3100.
+Playwright builds and serves the app on port 3100. Signed-in coverage needs `E2E_CLERK_USER_EMAIL` in `.env.local`, pointing to an existing Clerk development test user without MFA or pending session tasks. Use a `+clerk_test` address to suppress test email delivery.
 
-## Learn More
+## Working on the project
 
-To learn more about Next.js, take a look at the following resources:
+Start with `AGENTS.md` and the files in `context/`. They explain the product, architecture, UI conventions, and development workflow. `context/progress-tracker.md` records what's complete, and `context/feature-specs/` contains the individual feature specifications.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This is an early version. The project and sharing foundation is ready; the next pieces will bring the system design workspace to life.
