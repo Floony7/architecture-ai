@@ -4,13 +4,21 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-- Shape Panel (12) — Complete
+- Node Color Toolbar (15) — Complete
 
 ## Current Goal
 
-- Feature 12 is implemented and verified. Await the next feature unit.
+- Collaborators can choose a predefined fill and text color pair from the selected node's toolbar.
 
 ## Completed
+
+- Node Color Toolbar (15) (2026-11-23). Selected nodes display a floating toolbar with eight palette swatches. A matching ring marks the active swatch, and hover adds a small glow. Selecting a swatch syncs the fill through the existing canvas state and applies the matching text color to the label and inline editor.
+
+- Node Editing (14) (2026-11-23). Empty nodes display a centered “Add label” prompt. Double-clicking the label area opens a textarea that syncs edits as users type and closes on blur or Escape. Text editing keeps node and viewport positions fixed. Selected-node resize handles and minimum dimensions use the existing collaborative flow.
+
+- Node Shapes (13) (2026-11-23). Reused the existing CSS and SVG geometry and selection outlines. The shape panel now supplies a cursor-centered native drag preview with the same geometry and default dimensions as the dropped node. The browser clears the preview on drop or cancellation.
+
+- Canvas interaction fixes (2026-11-23). Rendered the six stored shape types with CSS and SVG. Selected nodes show resize handles, and circle resizing preserves aspect ratio. Added Delete and Backspace support plus a Delete selection button that uses the existing collaborative deletion flow. Added zoom and fit controls, an expanded zoom range, and an interactive minimap with clearance above the Liveblocks badge.
 
 - Workspace navigation streaming repair (2026-11-17). Added app/editor/[roomId]/loading.tsx, reusing the existing editor loading UI, so uncached Clerk/profile/project reads have a route-local Suspense boundary during client navigation. The parent editor loading boundary was shared across navigations and could not supply the required fallback below that shared segment. Authorization, request-time user reads, and caching configuration are unchanged.
 
@@ -68,6 +76,14 @@ Update this file whenever the current phase, active feature, or implementation s
 - Editor home contract (07): extends feature 06 with an optional validated `roomId` in create requests, persisted as the Project ID so room and project identity stay aligned. Omitting it retains CUID generation; raw `id` and `ownerId` remain ignored. No existing data helper was present, so `lib/projects.ts` supplies the server-side owned and primary-email collaborator queries. The workspace destination route remains feature 08.
 
 ## Session Notes
+
+- Node Color Toolbar (15) verified on 2026-11-23. The two-client Liveblocks browser fixture with substitute auth checked selection visibility, spacing above the node, hover and pressed styling, keyboard activation, viewport isolation, and matching fill and text updates for CSS and SVG nodes. Production build via pnpm, TypeScript, ESLint, and all 46 API regression tests passed.
+
+- Node Editing (14) verified on 2026-11-23. The two-client Liveblocks browser fixture with substitute auth passed live label updates, the empty prompt, blur and Escape dismissal, Backspace while editing, text selection and wheel isolation, and synchronized minimum circle size. Production build via pnpm, TypeScript, ESLint, and all 46 API regression tests passed.
+
+- Node Shapes (13) verified on 2026-11-23. The two-client Liveblocks fixture in headless Edge checked the native drag image setup for all six shapes, including matching shape markup, default dimensions, centered cursor offsets, and cleanup after drop and simulated cancellation. The native drop and existing collaboration checks passed. The fixture checks the source element sent to the browser and does not capture the OS drag image. Production build via pnpm, TypeScript, ESLint, and all 46 API regression tests passed.
+
+- Canvas interaction fixes verified on 2026-11-23. The two-client browser fixture against a temporary private Liveblocks room passed shape rendering, native and transformed-coordinate drops, wheel and button zoom, responsive control placement, shared movement and resize dimensions, and selection deletion by button, Delete, and Backspace. It confirmed that deleting a node removes its connected edge. The fixture uses substitute authentication. Full Clerk-authenticated E2E was skipped because `E2E_CLERK_USER_EMAIL` is absent. Production build, TypeScript, ESLint, and all 46 API regression tests passed.
 
 - Workspace streaming repair verified on 2026-11-17. A Next.js 16.4.5 browser fixture with Cache Components and partial prefetching reproduced the uncached-data diagnostic using only the parent loading boundary. With the actual route-local loading module, editor-to-room and room-to-room navigation showed the loading fallback and completed without console or uncached-data errors. The fixture uses the real workspace page with delayed request-time profile fetches and substitutes auth/project dependencies; no live Clerk session or application data was used. The fixture and server were removed afterward. Production build (including TypeScript), ESLint, all 46 Node regression tests, and git diff --check passed. Build ran through pnpm with access to the existing Google Fonts downloads. Documented the repeatable browser check in README.md.
 

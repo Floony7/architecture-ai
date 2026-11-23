@@ -82,7 +82,8 @@ test("editor home and sidebar manage persisted projects", async ({ page, context
     await expect(page.locator(".react-flow__background-pattern.dots")).toHaveCount(1);
     await expect(page.locator(".react-flow__node")).toHaveCount(0);
     await expect(page.locator(".react-flow__edge")).toHaveCount(0);
-    await expect(page.locator(".react-flow__controls")).toHaveCount(0);
+    await expect(page.locator(".react-flow__controls")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete selection" })).toBeDisabled();
     await expect(page.getByRole("toolbar", { name: "Shapes" }).getByRole("button")).toHaveCount(6);
     await navbar.getByRole("button", { name: "Share project" }).click();
     const shareDialog = page.getByRole("dialog", { name: "Share project" });

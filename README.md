@@ -11,7 +11,7 @@ The goal is simple: describe a system, shape its architecture on a shared canvas
 - **Sharing by email.** Owners can grant access, remove collaborators, and copy a project link. Collaborators can open shared projects and view the member list.
 - **A dark editor shell.** Project navigation, account controls, a Share dialog, and a toggleable AI sidebar are in place.
 
-Sharing grants access immediately to the matching signed-in email address; it doesn't send an invitation email. Project workspaces open a Liveblocks-backed React Flow canvas with a minimap, dot background, and six-shape drag toolbar. Dropped nodes sync with collaborators and currently render as simple rectangles. Shape-specific rendering, starter designs, AI generation, and Markdown spec export are still ahead; the AI assistant currently shows a placeholder.
+Sharing grants access immediately to the matching signed-in email address. Invitations are shared by project link. Project workspaces open a Liveblocks-backed React Flow canvas with an interactive minimap, dot background, and six-shape drag toolbar. Drag the background to pan, and use the wheel, pinch, or canvas controls to zoom. Dropped shapes can be moved, resized, and deleted with Delete, Backspace, or the Delete selection button. Changes sync with collaborators. Starter designs, AI generation, and Markdown spec export are still ahead. The AI assistant currently shows a placeholder.
 
 ## Run it locally
 

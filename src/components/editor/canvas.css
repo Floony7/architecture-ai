@@ -10,9 +10,15 @@
   --xy-minimap-node-background-color: var(--bg-subtle);
   --xy-minimap-node-stroke-color: var(--border-default);
   --xy-attribution-background-color: var(--bg-surface);
+  --xy-controls-button-background-color: var(--bg-surface);
+  --xy-controls-button-background-color-hover: var(--bg-elevated);
+  --xy-controls-button-color: var(--text-secondary);
+  --xy-controls-button-color-hover: var(--accent-primary);
+  --xy-controls-button-border-color: var(--border-default);
 }
 
 .architecture-flow .react-flow__minimap {
+  bottom: 38px;
   overflow: hidden;
   border: 1px solid var(--border-default);
   border-radius: calc(var(--radius) * 1.4);
@@ -22,9 +28,136 @@
   color: var(--text-muted);
 }
 
+.architecture-flow .react-flow__controls {
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius);
+}
+
+.architecture-flow .react-flow__controls-button {
+  width: 36px;
+  height: 36px;
+}
+
+.architecture-flow .react-flow__controls-button:first-child {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.architecture-flow .react-flow__controls-button:last-child {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.canvas-node {
+  --node-outline: var(--border-default);
+}
+
+.react-flow__node.selected .canvas-node {
+  --node-outline: var(--accent-primary);
+}
+
+.canvas-shape-drag-preview {
+  position: fixed;
+  bottom: 100%;
+  left: 0;
+  pointer-events: none;
+}
+
+.canvas-node-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+div.canvas-node-shape {
+  border: 1px solid var(--node-outline);
+}
+
+svg.canvas-node-shape {
+  stroke: var(--node-outline);
+}
+
+.canvas-node[data-shape="rectangle"] .canvas-node-shape {
+  border-radius: 4px;
+}
+
+.canvas-node[data-shape="circle"] .canvas-node-shape {
+  border-radius: 50%;
+}
+
+.canvas-node[data-shape="pill"] .canvas-node-shape {
+  border-radius: 9999px;
+}
+
+.canvas-node-label {
+  width: 75%;
+  height: 50%;
+  cursor: text;
+}
+
+.canvas-node[data-shape="diamond"] .canvas-node-label {
+  width: 55%;
+}
+
+.canvas-node-label-text {
+  width: 100%;
+  max-height: 100%;
+  overflow-wrap: anywhere;
+  text-align: center;
+  white-space: pre-wrap;
+}
+
+textarea.canvas-node-label-text {
+  field-sizing: content;
+}
+
+.canvas-node-color-swatch {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border-default);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.canvas-node-color-swatch::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.canvas-node-color-swatch[aria-pressed="true"] {
+  border-color: currentColor;
+}
+
+.canvas-node-color-swatch:hover {
+  box-shadow: 0 0 6px color-mix(in srgb, currentColor 50%, transparent);
+}
+
+.canvas-node-color-swatch:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
+
+.architecture-flow .canvas-resize-handle {
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  border-color: var(--bg-base);
+}
+
+.architecture-flow .canvas-resize-line {
+  border-style: dashed;
+  opacity: 0.6;
+}
+
 .architecture-flow .canvas-node-handle {
   width: 8px;
   height: 8px;
+  z-index: 2;
   background: var(--canvas-handle);
   border-color: var(--bg-base);
   opacity: 0;
@@ -41,6 +174,10 @@
   }
 
   .architecture-flow .react-flow__minimap {
-    bottom: 112px;
+    bottom: 146px;
+  }
+
+  .architecture-flow .react-flow__controls {
+    bottom: 92px;
   }
 }

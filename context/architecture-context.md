@@ -80,7 +80,24 @@
 
 - A bottom-center floating shape toolbar supplies rectangle, diamond, circle, pill, cylinder, and hexagon drags. Shared defaults are defined alongside the canvas types: rectangle 160×96, diamond 180×140, circle 120×120, pill 160×80, cylinder 140×120, and hexagon 160×120.
 - The drag payload carries shape, width, and height under a dedicated MIME type. The canvas wrapper validates it, converts the screen drop point through React Flow, and adds a canvasNode using the Liveblocks-synced node change handler. Node data starts with an empty label, the documented neutral color, and the dragged shape. IDs combine the shape, timestamp, and an incrementing counter.
-- A ReactFlowProvider supplies coordinate conversion to the canvas content. The basic canvasNode renderer draws every shape as a bordered rectangle with a centered label. Shape-specific visuals, resizing, label editing, and ghost previews remain subsequent units.
+- A ReactFlowProvider supplies coordinate conversion to the canvas content.
+
+## Node Shapes (13)
+
+- Stored nodes and the drag preview share the same CSS and SVG geometry. The shape panel supplies a cursor-centered native drag image using the shape and default dimensions from the existing payload. The browser ends the preview on drop or cancellation. Preview rendering is local to the source client.
+
+## Canvas Interaction Fixes
+
+- The canvas node renderer uses the stored shape and dimensions for both new and previously saved nodes. React Flow resize and movement events use the existing Liveblocks node change handler. Keyboard deletion and the canvas delete control use React Flow deletion so Liveblocks removes selected items and incident edges together.
+- Panning and zooming are local to each client. The viewport has no translation bounds and offers direct manipulation, zoom and fit controls, and an interactive minimap.
+
+## Node Editing (14)
+
+- Inline label edits use React Flow's node data update API, which emits changes through the existing Liveblocks node handler. Editor focus and visibility are local to the client. Resizing continues through the same handler with minimum dimensions of 56 by 40 canvas units.
+
+## Node Color Toolbar (15)
+
+- The selected node's React Flow toolbar writes the palette fill to its existing `data.color` field through the Liveblocks-backed node update flow. The renderer derives the corresponding text color from the palette, so the fill and text stay paired across clients and existing palette-colored nodes pick up the same styling.
 
 ## Starter System Designs
 

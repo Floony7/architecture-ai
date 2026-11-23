@@ -51,7 +51,7 @@ Radius increases with surface depth — smaller for inner elements, larger for o
 
 ### Node Color Palette
 
-8 defined color pairs. Each pair specifies a dark node fill and a vivid contrasting text color tuned for readability on the dark canvas. Defined in `types/canvas.ts` as `NODE_COLORS`.
+8 defined color pairs. Each pair specifies a dark node fill and a vivid contrasting text color tuned for readability on the dark canvas. Defined in `src/types/canvas.ts` as `NODE_COLORS`.
 
 | Node fill | Text color | Character              |
 | --------- | ---------- | ---------------------- |
@@ -65,6 +65,8 @@ Radius increases with surface depth — smaller for inner elements, larger for o
 | `#062822` | `#0AC7B4`  | Teal                   |
 
 Default node color: `#1F1F1F` with `#EDEDED` text. The default stored fill is `DEFAULT_NODE_COLOR` in `src/types/canvas.ts`; `--canvas-node-text` and `--canvas-handle` define the basic renderer label and handle colors.
+
+Selected nodes show a floating row of eight swatches above the node. Each swatch shows its background and text colors. The active swatch has a matching border, and hover adds a small glow in its text color.
 
 ### Edge Style
 
@@ -87,7 +89,15 @@ Small white circular handles, hidden by default, revealed on node hover. Appear 
 
 ### Shape Panel (12)
 
-A floating pill toolbar sits at the bottom center of the canvas with six draggable Lucide icon buttons. It uses surface, border, and text tokens. Default shape sizes live in `SHAPE_SIZES` in `src/types/canvas.ts`. In feature 12 all new shapes render as simple bordered rectangles with centered labels; shape-specific geometry comes in feature 13. On narrow canvases, a container query raises the toolbar above the Liveblocks badge and positions the minimap above it, including when a sidebar narrows a desktop workspace.
+A floating pill toolbar sits at the bottom center of the canvas with six draggable Lucide icon buttons. It uses surface, border, and text tokens. Default shape sizes live in `SHAPE_SIZES` in `src/types/canvas.ts`. Nodes display the geometry of their stored shape with a centered label. On narrow canvases, a container query stacks the minimap and canvas controls above the toolbar, including when a sidebar narrows a desktop workspace.
+
+### Canvas Editing and Navigation
+
+Dragging a shape shows its outline and neutral fill at the default node size, centered on the pointer. The preview disappears on drop or cancellation.
+
+Selected nodes have an amber outline and corner resize handles. Circles keep their aspect ratio during resize. The lower-left canvas controls provide zoom in, zoom out, fit view, and Delete selection. The minimap supports panning and zooming. Drag the background to pan or use the wheel or a pinch gesture to zoom.
+
+Labels are centered inside their nodes. Empty labels display “Add label.” Double-clicking the label area opens an inline textarea in the same position. Edits are shared as users type, and clicking away or pressing Escape closes the editor.
 
 ### Canvas Background
 

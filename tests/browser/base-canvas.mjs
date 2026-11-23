@@ -78,10 +78,14 @@ try {
     await expect(page.locator(".react-flow")).toBeVisible({ timeout: 30000 });
     await expect(page.locator(".react-flow__minimap")).toBeVisible();
     await expect(page.locator(".react-flow__background-pattern.dots")).toHaveCount(1);
-    await expect(page.locator(".react-flow__controls")).toHaveCount(0);
+    await expect(page.locator(".react-flow__controls")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete selection" })).toBeDisabled();
     await expect(page.locator(".react-flow__node")).toHaveCount(0);
     await expect(page.locator(".react-flow__edge")).toHaveCount(0);
   }
+  const desktopCanvas = await pages[0].locator(".react-flow").boundingBox();
+  const desktopMap = await pages[0].locator(".react-flow__minimap").boundingBox();
+  assert.ok(desktopCanvas.y + desktopCanvas.height - desktopMap.y - desktopMap.height >= 50);
   await pages[0].screenshot({ path: path.join(root, "test-results", "base-canvas-desktop.png") });
   await pages[0].setViewportSize({ width: 320, height: 640 });
   assert.equal(await pages[0].evaluate(() => document.documentElement.scrollWidth), 320);
@@ -98,6 +102,14 @@ try {
   };
   const toolbar = pages[0].getByRole("toolbar", { name: "Shapes" });
   await expect(toolbar.getByRole("button")).toHaveCount(6);
+  const preview = pages[0].locator(".canvas-shape-drag-preview");
+  await pages[0].evaluate(() => {
+    const setDragImage = DataTransfer.prototype.setDragImage;
+    DataTransfer.prototype.setDragImage = function (element, x, y) {
+      element.dataset.hotspot = JSON.stringify({ x, y });
+      return setDragImage.call(this, element, x, y);
+    };
+  });
   await pages[0].locator("main").evaluate(element => {
     element.style.marginTop = "64px";
     element.style.height = "calc(100dvh - 64px)";
@@ -108,8 +120,12 @@ try {
   await pages[0].mouse.up();
   const viewport = pages[0].locator(".react-flow__viewport");
   const beforeZoom = await viewport.getAttribute("style");
-  await pages[0].mouse.wheel(0, 250);
+  await pages[0].locator(".react-flow__controls-zoomin").click();
   await expect.poll(() => viewport.getAttribute("style")).not.toBe(beforeZoom);
+  const beforeWheelZoom = await viewport.getAttribute("style");
+  await pages[0].mouse.move(760, 290);
+  await pages[0].mouse.wheel(0, 250);
+  await expect.poll(() => viewport.getAttribute("style")).not.toBe(beforeWheelZoom);
   // Wheel zoom animates; wait for it to settle before checking coordinates.
   await pages[0].waitForTimeout(350);
   const createdIds = [];
@@ -121,6 +137,11 @@ try {
     const transfer = await pages[0].evaluateHandle(() => new DataTransfer());
     await source.dispatchEvent("dragstart", { dataTransfer: transfer });
     assert.deepEqual(await transfer.evaluate(data => JSON.parse(data.getData("application/architecture-ai-shape"))), { shape, ...size });
+    await expect(preview).toHaveAttribute("data-shape", shape);
+    await expect(preview).toHaveAttribute("data-hotspot", JSON.stringify({ x: size.width / 2, y: size.height / 2 }));
+    await expect(preview).toHaveCSS("width", `${size.width}px`);
+    await expect(preview).toHaveCSS("height", `${size.height}px`);
+    const shapeMarkup = await preview.locator(".canvas-node-shape").evaluate(element => element.outerHTML);
     const x = 180 + (index % 3) * 280;
     const y = 180 + Math.floor(index / 3) * 200;
     const expected = await pages[0].locator(".react-flow").evaluate((element, point) => {
@@ -132,9 +153,12 @@ try {
     await pane.dispatchEvent("dragover", { dataTransfer: transfer, clientX: x, clientY: y });
     await pane.dispatchEvent("drop", { dataTransfer: transfer, clientX: x, clientY: y });
     await source.dispatchEvent("dragend", { dataTransfer: transfer });
+    await expect(preview).toHaveCount(0);
     await transfer.dispose();
     index++;
     for (const page of pages) await expect(page.locator(".react-flow__node-canvasNode")).toHaveCount(index);
+    const nodeShape = pages[0].locator(`.react-flow__node-canvasNode [data-shape="${shape}"] .canvas-node-shape`);
+    assert.equal(await nodeShape.evaluate(element => element.outerHTML), shapeMarkup);
     let node;
     await mutateFlow({ client, roomId }, flow => { node = flow.nodes.find(item => item.data.shape === shape); });
     assert.ok(node);
@@ -149,15 +173,154 @@ try {
   }
   assert.equal(new Set(createdIds).size, 6);
   await expect(pages[0].locator(".canvas-node")).toHaveCount(6);
-  await expect(pages[0].locator(".canvas-node svg")).toHaveCount(0);
+  for (const page of pages) {
+    await expect(page.locator(".canvas-node svg")).toHaveCount(3);
+    for (const shape of Object.keys(shapes)) {
+      await expect(page.locator(`.canvas-node[data-shape="${shape}"] .canvas-node-shape`)).toBeVisible();
+    }
+    await expect(page.locator('.canvas-node[data-shape="circle"] .canvas-node-shape')).toHaveCSS("border-radius", "50%");
+  }
+
+  const [editor, collaborator] = pages;
+  const canvasNode = (page, id) => page.locator(`.react-flow__node[data-id="${id}"]`);
+  const circle = canvasNode(editor, createdIds[2]);
+  const sharedCircle = canvasNode(collaborator, createdIds[2]);
+  const nodeSize = (node) => node.evaluate(element => ({
+    width: Number.parseFloat(element.style.width),
+    height: Number.parseFloat(element.style.height),
+  }));
+  await expect(circle.locator(".canvas-resize-handle")).toHaveCount(0);
+  await circle.click();
+  await expect(circle.locator(".canvas-resize-handle")).toHaveCount(4);
+  await expect(sharedCircle.locator(".canvas-resize-handle")).toHaveCount(0);
+  const corner = await circle.locator(".canvas-resize-handle.bottom.right").boundingBox();
+  assert.ok(corner);
+  const cornerX = corner.x + corner.width / 2;
+  const cornerY = corner.y + corner.height / 2;
+  await editor.mouse.move(cornerX, cornerY);
+  await editor.mouse.down();
+  await editor.mouse.move(cornerX + 48, cornerY + 48, { steps: 10 });
+  await editor.mouse.up();
+  const size = await nodeSize(circle);
+  assert.ok(size.width > shapes.circle.width);
+  assert.equal(size.width, size.height);
+  await expect.poll(() => nodeSize(sharedCircle)).toEqual(size);
+  await expect.poll(async () => {
+    let storedSize;
+    await mutateFlow({ client, roomId }, flow => {
+      const { width, height } = flow.nodes.find(node => node.id === createdIds[2]);
+      storedSize = { width, height };
+    });
+    return storedSize;
+  }).toEqual(size);
+
+  const resizedBounds = await circle.boundingBox();
+  const shrinkHandle = await circle.locator(".canvas-resize-handle.bottom.right").boundingBox();
+  assert.ok(resizedBounds && shrinkHandle);
+  await editor.mouse.move(shrinkHandle.x + shrinkHandle.width / 2, shrinkHandle.y + shrinkHandle.height / 2);
+  await editor.mouse.down();
+  await editor.mouse.move(resizedBounds.x + 10, resizedBounds.y + 10, { steps: 10 });
+  await editor.mouse.up();
+  await expect.poll(() => nodeSize(circle)).toEqual({ width: 56, height: 56 });
+  await expect.poll(() => nodeSize(sharedCircle)).toEqual({ width: 56, height: 56 });
+
+  const rectangle = canvasNode(editor, createdIds[0]);
+  const label = rectangle.locator(".canvas-node-label");
+  const sharedLabel = canvasNode(collaborator, createdIds[0]).locator(".canvas-node-label");
+  const textarea = rectangle.getByRole("textbox", { name: "Node label" });
+  const beforeEditing = await viewport.getAttribute("style");
+  const rectanglePosition = await rectangle.evaluate(element => element.style.transform);
+  await expect(label).toHaveText("Add label");
+  await label.dblclick();
+  await expect(textarea).toBeFocused();
+  await expect(textarea).toHaveAttribute("placeholder", "Add label");
+  await expect(viewport).toHaveAttribute("style", beforeEditing);
+  await textarea.pressSequentially("API gateway");
+  await textarea.press("Backspace");
+  await expect(textarea).toHaveValue("API gatewa");
+  await expect(sharedLabel).toHaveText("API gatewa");
+  const textareaBounds = await textarea.boundingBox();
+  assert.ok(textareaBounds);
+  await editor.mouse.move(textareaBounds.x + 2, textareaBounds.y + textareaBounds.height / 2);
+  await editor.mouse.down();
+  await editor.mouse.move(textareaBounds.x + textareaBounds.width - 2, textareaBounds.y + textareaBounds.height / 2, { steps: 6 });
+  await editor.mouse.up();
+  await editor.mouse.wheel(0, 100);
+  await expect(textarea).toBeFocused();
+  await expect(viewport).toHaveAttribute("style", beforeEditing);
+  assert.equal(await rectangle.evaluate(element => element.style.transform), rectanglePosition);
+  assert.deepEqual(await nodeSize(rectangle), shapes.rectangle);
+  await textarea.press("Escape");
+  await expect(textarea).toHaveCount(0);
+  await expect(label).toHaveText("API gatewa");
+  await label.dblclick();
+  await textarea.fill("");
+  await editor.locator(".react-flow__pane").click({ position: { x: 30, y: 30 } });
+  await expect(textarea).toHaveCount(0);
+  await expect(label).toHaveText("Add label");
+  await expect(sharedLabel).toHaveText("Add label");
+  console.log("Node editing passed: resize limits, live label updates, blur and Escape, and isolated text input.");
+
   // Exercise a real native browser drag as well as the payload-boundary checks.
   await toolbar.getByRole("button", { name: "Rectangle", exact: true }).dragTo(pages[0].locator(".react-flow__pane"), { targetPosition: { x: 420, y: 350 } });
+  await expect(preview).toHaveCount(0);
+  for (const page of pages) await expect(page.locator(".react-flow__node-canvasNode")).toHaveCount(7);
+  const cancelSource = toolbar.getByRole("button", { name: "Hexagon", exact: true });
+  const cancelledTransfer = await pages[0].evaluateHandle(() => new DataTransfer());
+  await cancelSource.dispatchEvent("dragstart", { dataTransfer: cancelledTransfer });
+  await expect(preview).toHaveAttribute("data-shape", "hexagon");
+  await cancelSource.dispatchEvent("dragend", { dataTransfer: cancelledTransfer });
+  await expect(preview).toHaveCount(0);
+  await cancelledTransfer.dispose();
   for (const page of pages) await expect(page.locator(".react-flow__node-canvasNode")).toHaveCount(7);
   await mutateFlow({ client, roomId }, flow => {
     for (const node of flow.nodes) if (!createdIds.includes(node.id)) createdIds.push(node.id);
     flow.updateNodeData(createdIds[0], { label: "Shared label" });
   });
   for (const page of pages) await expect(page.locator(".canvas-node").filter({ hasText: "Shared label" })).toHaveCount(1);
+  const colors = editor.getByRole("group", { name: "Node colors" });
+  await editor.locator(".react-flow__pane").click({ position: { x: 30, y: 30 } });
+  await expect(colors).toHaveCount(0);
+  await rectangle.click();
+  await expect(colors.getByRole("button")).toHaveCount(8);
+  await expect(colors.getByRole("button", { name: "Neutral" })).toHaveAttribute("aria-pressed", "true");
+  await expect(collaborator.getByRole("group", { name: "Node colors" })).toHaveCount(0);
+  const colorBounds = await colors.boundingBox();
+  const rectangleBounds = await rectangle.boundingBox();
+  assert.ok(colorBounds && rectangleBounds);
+  assert.equal(Math.round(rectangleBounds.y - colorBounds.y - colorBounds.height), 12);
+  const blue = colors.getByRole("button", { name: "Blue" });
+  await blue.hover();
+  await expect(blue).not.toHaveCSS("box-shadow", "none");
+  const beforeColorSelection = await viewport.getAttribute("style");
+  await editor.mouse.wheel(0, 120);
+  await blue.click();
+  await expect(blue).toHaveAttribute("aria-pressed", "true");
+  await expect(blue).toHaveCSS("border-top-color", "rgb(82, 168, 255)");
+  await expect(viewport).toHaveAttribute("style", beforeColorSelection);
+  assert.equal(await rectangle.evaluate(element => element.style.transform), rectanglePosition);
+  for (const page of pages) {
+    const node = canvasNode(page, createdIds[0]);
+    await expect(node.locator(".canvas-node-shape")).toHaveCSS("background-color", "rgb(16, 35, 61)");
+    await expect(node.getByText("Shared label")).toHaveCSS("color", "rgb(82, 168, 255)");
+  }
+  await label.dblclick();
+  await expect(textarea).toHaveCSS("color", "rgb(82, 168, 255)");
+  await textarea.press("Escape");
+
+  const diamond = canvasNode(editor, createdIds[1]);
+  await diamond.click();
+  await colors.getByRole("button", { name: "Teal" }).press("Enter");
+  await expect(colors.getByRole("button", { name: "Teal" })).toHaveAttribute("aria-pressed", "true");
+  for (const page of pages) {
+    const node = canvasNode(page, createdIds[1]);
+    await expect(node.locator(".canvas-node-shape path").first()).toHaveCSS("fill", "rgb(6, 40, 34)");
+    await expect(node.getByText("Add label")).toHaveCSS("color", "rgb(10, 199, 180)");
+  }
+  await editor.locator(".react-flow__pane").click({ position: { x: 30, y: 30 } });
+  await expect(colors).toHaveCount(0);
+  console.log("Node colors passed: selection visibility, swatch states, viewport isolation, and shared CSS and SVG fills with paired text.");
+
   const invalid = await pages[0].evaluateHandle(() => new DataTransfer());
   for (const value of ['{', '{"shape":"triangle","width":100,"height":100}', '{"shape":"circle","width":0,"height":100}', '{"shape":"circle","width":100}', '{"shape":"circle","width":"100","height":100}']) {
     await invalid.evaluate((data, value) => data.setData("application/architecture-ai-shape", value), value);
@@ -188,7 +351,10 @@ try {
     assert.equal(hit, await button.getAttribute("aria-label"));
   }
   await pages[0].locator("main").evaluate(element => { element.style.width = ""; });
-  await mutateFlow({ client, roomId }, flow => flow.removeNodes(createdIds));
+  await circle.click();
+  await pages[0].getByRole("button", { name: "Delete selection" }).click();
+  for (const page of pages) await expect(canvasNode(page, createdIds[2])).toHaveCount(0);
+  await mutateFlow({ client, roomId }, flow => flow.removeNodes(createdIds.filter(id => id !== createdIds[2])));
   for (const page of pages) await expect(page.locator(".react-flow__node")).toHaveCount(0);
   console.log("Shape panel passed: six payloads, custom node types/data/sizes, transformed coordinates, unique IDs, native drag, invalid payloads, synchronized labels, and responsive layout.");
 
@@ -224,13 +390,16 @@ try {
   await pages[0].mouse.up();
   for (const page of pages) await expect(page.locator(".react-flow__edge")).toHaveCount(1);
   await a.click();
-  await pages[0].keyboard.press("Backspace");
+  await pages[0].keyboard.press("Delete");
   for (const page of pages) {
     await expect(page.locator(".react-flow__node")).toHaveCount(1);
     await expect(page.locator(".react-flow__edge")).toHaveCount(0);
   }
   await pages[0].reload();
   await expect(pages[0].locator(".react-flow__node")).toHaveCount(1);
+  await pages[0].locator('[data-id="test-b"].react-flow__node').click();
+  await pages[0].keyboard.press("Backspace");
+  for (const page of pages) await expect(page.locator(".react-flow__node")).toHaveCount(0);
 
   const denied = await browser.newPage();
   await denied.route("**/api/liveblocks-auth", route => route.fulfill({ status: 403, contentType: "application/json", body: '{"error":"Forbidden"}' }));
@@ -238,7 +407,7 @@ try {
   await expect(denied.locator("main").getByRole("alert")).toContainText("Unable to connect to the canvas", { timeout: 30000 });
   await expect.poll(() => denied.locator("main").getByRole("alert").evaluate(element => getComputedStyle(element).display)).toBe("grid");
   await denied.screenshot({ path: path.join(root, "test-results", "base-canvas-error.png") });
-  console.log("Passed: loading, empty canvas, dark desktop/mobile layout, minimap/dots, no controls, two-client node movement, loose connections, node/edge deletion, reload continuity, and auth-error fallback.");
+  console.log("Passed: loading, desktop/mobile layout, zoom controls, six shapes, shared movement and resizing, loose connections, keyboard and button deletion, reload continuity, and auth-error fallback.");
 } catch (error) {
   console.error(serverOutput.slice(-2500));
   throw error;
